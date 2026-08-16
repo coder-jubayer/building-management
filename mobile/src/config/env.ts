@@ -66,6 +66,6 @@ function resolveApiUrl(): string {
 
 export const config = {
   apiUrl: resolveApiUrl(),
-  appName: 'Building Management',
+  appName: 'Barighorr',
   appVersion: Constants.expoConfig?.version ?? '1.0.0',
 } as const;

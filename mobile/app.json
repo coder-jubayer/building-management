@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "Building Management",
-    "slug": "building-management",
+    "name": "Barighorr",
+    "slug": "barighorr",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "scheme": "buildingmanagement",
+    "scheme": "barighorr",
     "userInterfaceStyle": "light",
     "backgroundColor": "#FFFFFF",
     "androidStatusBar": {
@@ -25,7 +25,7 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.buildingmanagement.app",
+      "bundleIdentifier": "com.barighorr.app",
       "buildNumber": "1",
       "infoPlist": {
         "NSCameraUsageDescription": "Scan guest QR codes for visitor approval",
@@ -33,7 +33,7 @@
       }
     },
     "android": {
-      "package": "com.buildingmanagement.app",
+      "package": "com.barighorr.app",
       "versionCode": 1,
       "usesCleartextTraffic": true,
       "backgroundColor": "#FFFFFF",
@@ -69,8 +69,9 @@
       "apiUrl": "http://64.176.81.197:3011/api/v1",
       "router": {},
       "eas": {
-        "projectId": "00000000-0000-0000-0000-000000000000"
+        "projectId": "1cbe49f9-c6ee-459d-860a-401feba94d9d"
       }
-    }
+    },
+    "owner": "theshadowgardenassociation"
   }
 }

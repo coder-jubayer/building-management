@@ -13,6 +13,10 @@
     },
     "preview": {
       "distribution": "internal",
+      "credentialsSource": "local",
+      "android": {
+        "buildType": "apk"
+      },
       "env": {
         "EXPO_PUBLIC_API_URL": "http://64.176.81.197:3011/api/v1"
       }

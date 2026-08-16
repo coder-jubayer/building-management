@@ -61,9 +61,9 @@ export default function LoginScreen() {
       >
         <View style={styles.logoContainer}>
           <View style={styles.logo}>
-            <Text style={styles.logoText}>BM</Text>
+            <Text style={styles.logoText}>BH</Text>
           </View>
-          <Text style={styles.appName}>Building Management</Text>
+          <Text style={styles.appName}>Barighorr</Text>
           <Text style={styles.tagline}>Sign in to continue</Text>
         </View>
 
