@@ -5,6 +5,7 @@ RUN npm ci
 
 FROM node:22-alpine AS build
 WORKDIR /app
+COPY package.json package-lock.json ./
 COPY --from=deps /app/node_modules ./node_modules
 COPY tsconfig.json ./
 COPY src ./src
