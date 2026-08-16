@@ -81,10 +81,13 @@ export default function HomeScreen() {
           <Text style={styles.name}>{firstName}</Text>
         </View>
         <Pressable onPress={() => router.push('/(tabs)/profile')} style={styles.avatarWrap}>
-          <Image
-            source={{ uri: user?.avatar || `https://i.pravatar.cc/150?u=${user?.email ?? 'user'}` }}
-            style={styles.avatar}
-          />
+          {user?.avatar ? (
+            <Image source={{ uri: user.avatar }} style={styles.avatar} />
+          ) : (
+            <View style={[styles.avatar, styles.avatarBlank]}>
+              <Ionicons name="person" size={18} color={colors.textMuted} />
+            </View>
+          )}
           <View style={styles.dot} />
         </Pressable>
       </View>
@@ -267,6 +270,12 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     borderWidth: 1,
     borderColor: colors.slate200,
+    backgroundColor: colors.slate100,
+    overflow: 'hidden',
+  },
+  avatarBlank: {
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   dot: {
     position: 'absolute',

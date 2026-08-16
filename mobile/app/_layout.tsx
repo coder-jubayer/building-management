@@ -1,7 +1,9 @@
+import 'react-native-gesture-handler';
 import { useEffect } from 'react';
 import { Stack, useRouter, useSegments } from 'expo-router';
-import { ActivityIndicator, Platform, StatusBar as NativeStatusBar, View, StyleSheet } from 'react-native';
+import { ActivityIndicator, View, StyleSheet } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useAuthStore } from '../src/stores/auth.store';
 import { listenForNoticeTap, initNotifications, registerPushToken } from '../src/services/push.service';
@@ -48,56 +50,48 @@ function AuthGate({ children }: { children: React.ReactNode }) {
     return () => unsubscribe?.();
   }, [isAuthenticated, router]);
 
-  if (!isHydrated) {
-    return (
-      <View style={styles.boot}>
-        <ActivityIndicator size="large" color={colors.primary} />
-      </View>
-    );
-  }
-
-  return <>{children}</>;
+  return (
+    <View style={styles.gate}>
+      {children}
+      {!isHydrated ? (
+        <View style={styles.boot}>
+          <ActivityIndicator size="large" color={colors.primary} />
+        </View>
+      ) : null}
+    </View>
+  );
 }
 
 export default function RootLayout() {
-  useEffect(() => {
-    NativeStatusBar.setBarStyle('dark-content', true);
-    if (Platform.OS !== 'android') return;
-    try {
-      NativeStatusBar.setBackgroundColor(colors.surface, true);
-      NativeStatusBar.setTranslucent(true);
-    } catch {
-      // Android 15+ edge-to-edge ignores these; the light window background is enough.
-    }
-  }, []);
-
   return (
-    <SafeAreaProvider style={styles.shell}>
-      <StatusBar style="dark" backgroundColor={colors.surface} translucent />
-      <AuthGate>
-        <Stack
-          screenOptions={{
-            headerShown: false,
-            contentStyle: { backgroundColor: colors.background },
-            animation: 'slide_from_right',
-          }}
-        >
-          <Stack.Screen name="(auth)" />
-          <Stack.Screen name="(tabs)" />
-          <Stack.Screen name="notices" />
-          <Stack.Screen name="marketplace" />
-          <Stack.Screen name="voting" />
-          <Stack.Screen name="amenities" />
-          <Stack.Screen name="complaints" />
-          <Stack.Screen name="directory" />
-          <Stack.Screen name="expenses" />
-          <Stack.Screen name="messages" options={{ animation: 'slide_from_bottom' }} />
-          <Stack.Screen name="messages-contacts" />
-          <Stack.Screen name="rentals" />
-          <Stack.Screen name="users" />
-        </Stack>
-      </AuthGate>
-    </SafeAreaProvider>
+    <GestureHandlerRootView style={styles.shell}>
+      <SafeAreaProvider style={styles.shell}>
+        <StatusBar style="dark" />
+        <AuthGate>
+          <Stack
+            screenOptions={{
+              headerShown: false,
+              contentStyle: { backgroundColor: colors.background },
+              animation: 'slide_from_right',
+            }}
+          >
+            <Stack.Screen name="(auth)" />
+            <Stack.Screen name="(tabs)" />
+            <Stack.Screen name="notices" />
+            <Stack.Screen name="marketplace" />
+            <Stack.Screen name="voting" />
+            <Stack.Screen name="amenities" />
+            <Stack.Screen name="complaints" />
+            <Stack.Screen name="directory" />
+            <Stack.Screen name="expenses" />
+            <Stack.Screen name="messages" options={{ animation: 'slide_from_bottom' }} />
+            <Stack.Screen name="messages-contacts" />
+            <Stack.Screen name="rentals" />
+            <Stack.Screen name="users" />
+          </Stack>
+        </AuthGate>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }
 
@@ -106,10 +100,13 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.surface,
   },
-  boot: {
+  gate: {
     flex: 1,
+  },
+  boot: {
+    ...StyleSheet.absoluteFillObject,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.background,
+    backgroundColor: colors.surface,
   },
 });

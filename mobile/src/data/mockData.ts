@@ -151,21 +151,21 @@ export const mockCandidates: Candidate[] = [
     name: 'Robert Chen',
     position: 'President',
     votes: 142,
-    image: 'https://i.pravatar.cc/150?u=1',
+    image: '',
   },
   {
     id: '2',
     name: 'Sarah Jenkins',
     position: 'President',
     votes: 128,
-    image: 'https://i.pravatar.cc/150?u=2',
+    image: '',
   },
   {
     id: '3',
     name: 'Michael Ross',
     position: 'Treasurer',
     votes: 180,
-    image: 'https://i.pravatar.cc/150?u=3',
+    image: '',
   },
 ];
 

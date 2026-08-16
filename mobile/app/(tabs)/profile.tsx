@@ -22,10 +22,6 @@ import { updateMyProfile } from '../../src/services/auth.service';
 import { canManageUsers, ROLE_LABELS } from '../../src/types';
 import { colors, spacing, borderRadius, shadows } from '../../src/theme';
 
-function fallbackAvatar(email?: string) {
-  return `https://i.pravatar.cc/150?u=${email ?? 'user'}`;
-}
-
 export default function ProfileScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -44,8 +40,8 @@ export default function ProfileScreen() {
   const [formError, setFormError] = useState<string | null>(null);
 
   const avatarUri = useMemo(
-    () => avatar?.uri || user?.avatar || fallbackAvatar(user?.email),
-    [avatar?.uri, user?.avatar, user?.email],
+    () => avatar?.uri || user?.avatar || null,
+    [avatar?.uri, user?.avatar],
   );
 
   const showToast = (message: string) => {
@@ -172,7 +168,13 @@ export default function ProfileScreen() {
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.card}>
           <Pressable style={styles.avatarRing} onPress={openEdit}>
-            <Image source={{ uri: avatarUri }} style={styles.avatar} />
+            {avatarUri ? (
+              <Image source={{ uri: avatarUri }} style={styles.avatar} />
+            ) : (
+              <View style={[styles.avatar, styles.avatarBlank]}>
+                <Ionicons name="person" size={40} color={colors.textMuted} />
+              </View>
+            )}
             <View style={styles.cameraBadge}>
               <Ionicons name="camera" size={14} color={colors.white} />
             </View>
@@ -223,7 +225,13 @@ export default function ProfileScreen() {
             <Text style={styles.modalSub}>Update your name, photo, phone, and unit details.</Text>
             <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.editForm}>
               <Pressable style={styles.editAvatarWrap} onPress={() => void pickAvatar()}>
-                <Image source={{ uri: avatarUri }} style={styles.editAvatar} />
+                {avatarUri ? (
+                  <Image source={{ uri: avatarUri }} style={styles.editAvatar} />
+                ) : (
+                  <View style={[styles.editAvatar, styles.avatarBlank]}>
+                    <Ionicons name="person" size={40} color={colors.textMuted} />
+                  </View>
+                )}
                 <View style={styles.editAvatarBadge}>
                   <Ionicons name="camera" size={16} color={colors.white} />
                 </View>
@@ -283,7 +291,13 @@ export default function ProfileScreen() {
 
             <View style={styles.selectedPreview}>
               <View style={styles.previewAvatar}>
-                <Image source={{ uri: user?.avatar || fallbackAvatar(user?.email) }} style={styles.previewImage} />
+                {user?.avatar ? (
+                  <Image source={{ uri: user.avatar }} style={styles.previewImage} />
+                ) : (
+                  <View style={[styles.previewImage, styles.avatarBlank]}>
+                    <Ionicons name="person" size={20} color={colors.textMuted} />
+                  </View>
+                )}
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={styles.previewName}>{user?.name}</Text>
@@ -346,7 +360,8 @@ const styles = StyleSheet.create({
     padding: 4,
     marginBottom: spacing.md,
   },
-  avatar: { width: '100%', height: '100%', borderRadius: 44 },
+  avatar: { width: '100%', height: '100%', borderRadius: 44, backgroundColor: colors.slate100 },
+  avatarBlank: { alignItems: 'center', justifyContent: 'center' },
   cameraBadge: {
     position: 'absolute',
     right: 2,

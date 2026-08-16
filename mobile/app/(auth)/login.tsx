@@ -61,13 +61,13 @@ export default function LoginScreen() {
       >
         <View style={styles.logoContainer}>
           <View style={styles.logo}>
-            <Text style={styles.logoText}>BH</Text>
+            <Text style={styles.logoText}>BG</Text>
           </View>
           <Text style={styles.appName}>Barighorr</Text>
           <Text style={styles.tagline}>Sign in to continue</Text>
         </View>
 
-        <Card title="Sign In" subtitle="All users log in here">
+        <Card>
           <View style={styles.form}>
             <Input
               label="Email"

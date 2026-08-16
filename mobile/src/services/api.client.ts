@@ -32,7 +32,7 @@ apiClient.interceptors.response.use(
     if (!error.response) {
       return Promise.reject(
         new Error(
-          `Network error — cannot reach API at ${config.apiUrl}. Use the same Wi‑Fi as your PC.`,
+          `Network error — cannot reach API at ${config.apiUrl}`,
         ),
       );
     }

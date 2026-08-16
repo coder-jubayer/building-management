@@ -9,6 +9,7 @@ import {
   Pressable,
   KeyboardAvoidingView,
   Platform,
+  Image,
 } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -169,26 +170,12 @@ export default function UsersScreen() {
 
   return (
     <View style={styles.screen}>
-      <PageHeader
-        title="Manage Users"
-        onBack={() => router.back()}
-        rightAction={
-          <Pressable
-            onPress={() => {
-              resetForm();
-              setCreateOpen(true);
-            }}
-            style={styles.headerAdd}
-          >
-            <Ionicons name="person-add-outline" size={20} color={colors.primary} />
-          </Pressable>
-        }
-      >
+      <PageHeader title="Manage Users" onBack={() => router.back()}>
         <Text style={styles.subtitle}>{subtitle}</Text>
       </PageHeader>
 
       <ScrollView
-        contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 40 }]}
+        contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 100 }]}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={() => {
             setRefreshing(true);
@@ -213,7 +200,9 @@ export default function UsersScreen() {
             <Card key={user.id}>
               <View style={styles.row}>
                 <View style={styles.avatar}>
-                  <Text style={styles.avatarText}>{user.name.charAt(0)}</Text>
+                  {user.avatar ? (
+                    <Image source={{ uri: user.avatar }} style={styles.avatarImage} />
+                  ) : null}
                 </View>
                 <View style={styles.userInfo}>
                   <Text style={styles.name}>{user.name}</Text>
@@ -267,17 +256,33 @@ export default function UsersScreen() {
       </ScrollView>
 
       {toast ? (
-        <View style={[styles.toast, { bottom: insets.bottom + 24 }]}>
+        <View style={[styles.toast, { bottom: insets.bottom + 96 }]}>
           <Text style={styles.toastText}>{toast}</Text>
         </View>
       ) : null}
 
-      <Modal visible={createOpen} animationType="slide" transparent onRequestClose={() => setCreateOpen(false)}>
+      {!createOpen ? (
+        <Pressable
+          style={({ pressed }) => [
+            styles.fab,
+            { bottom: insets.bottom + 24 },
+            pressed && styles.fabPressed,
+          ]}
+          onPress={() => {
+            resetForm();
+            setCreateOpen(true);
+          }}
+        >
+          <Ionicons name="person-add" size={22} color={colors.white} />
+        </Pressable>
+      ) : null}
+
+      <Modal visible={createOpen} animationType="fade" transparent onRequestClose={() => setCreateOpen(false)}>
         <KeyboardAvoidingView
-          style={styles.modalWrap}
+          style={styles.modalOverlay}
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         >
-          <Pressable style={styles.backdrop} onPress={() => setCreateOpen(false)} />
+          <Pressable style={styles.modalDismiss} onPress={() => setCreateOpen(false)} />
           <View style={[styles.sheet, { paddingBottom: insets.bottom + spacing.lg }]}>
             <View style={styles.sheetHandle} />
             <PopupHeader title="Add user" onClose={() => setCreateOpen(false)} />
@@ -418,24 +423,30 @@ const styles = StyleSheet.create({
     marginTop: spacing.xs,
   },
   content: { padding: spacing.lg, gap: spacing.md },
-  headerAdd: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: colors.primaryLight,
+  fab: {
+    position: 'absolute',
+    right: spacing.lg,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
+    zIndex: 40,
+    ...shadows.fab,
   },
+  fabPressed: { transform: [{ scale: 0.95 }] },
   row: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   avatar: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: colors.primaryLight,
+    backgroundColor: colors.slate100,
+    overflow: 'hidden',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  avatarText: { color: colors.primary, fontWeight: '700', fontSize: 18 },
+  avatarImage: { width: '100%', height: '100%' },
   userInfo: { flex: 1 },
   name: { ...typography.body, fontWeight: '700', color: colors.text },
   email: { ...typography.caption, color: colors.textSecondary },
@@ -466,8 +477,13 @@ const styles = StyleSheet.create({
     ...shadows.md,
   },
   toastText: { color: colors.white, textAlign: 'center', fontWeight: '600' },
-  modalWrap: { flex: 1, justifyContent: 'flex-end' },
-  backdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.4)' },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(15,23,42,0.45)',
+    justifyContent: 'flex-end',
+  },
+  modalDismiss: { flex: 1 },
+  backdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(15,23,42,0.45)' },
   sheet: {
     backgroundColor: colors.surface,
     borderTopLeftRadius: borderRadius.xl,

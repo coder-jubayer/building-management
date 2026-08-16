@@ -71,22 +71,23 @@ export default function SignupScreen() {
       style={styles.flex}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
+      <View style={[styles.header, { paddingTop: insets.top + spacing.lg }]}>
+        <View style={styles.logo}>
+          <Text style={styles.logoText}>BG</Text>
+        </View>
+        <Text style={styles.appName}>Building Admin</Text>
+        <Text style={styles.tagline}>Create your community account</Text>
+      </View>
+
       <ScrollView
+        style={styles.scroll}
         contentContainerStyle={[
-          styles.container,
-          { paddingTop: insets.top + spacing.xl, paddingBottom: insets.bottom + spacing.xl },
+          styles.formWrap,
+          { paddingBottom: insets.bottom + spacing.xl },
         ]}
         keyboardShouldPersistTaps="handled"
       >
-        <View style={styles.logoContainer}>
-          <View style={styles.logo}>
-            <Text style={styles.logoText}>BM</Text>
-          </View>
-          <Text style={styles.appName}>Building Admin</Text>
-          <Text style={styles.tagline}>Create your community account</Text>
-        </View>
-
-        <Card title="Sign Up" subtitle="Only building admins can register here">
+        <Card>
           <View style={styles.form}>
             <Input
               label="Full name"
@@ -162,13 +163,18 @@ export default function SignupScreen() {
 
 const styles = StyleSheet.create({
   flex: { flex: 1, backgroundColor: colors.background },
-  container: {
-    flexGrow: 1,
+  header: {
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.md,
+    backgroundColor: colors.background,
+  },
+  scroll: { flex: 1 },
+  formWrap: {
     paddingHorizontal: spacing.lg,
     gap: spacing.lg,
-    justifyContent: 'center',
   },
-  logoContainer: { alignItems: 'center', gap: spacing.sm, marginBottom: spacing.md },
   logo: {
     width: 72,
     height: 72,
