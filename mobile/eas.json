@@ -14,13 +14,13 @@
     "preview": {
       "distribution": "internal",
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://staging-api.yourdomain.com/api/v1"
+        "EXPO_PUBLIC_API_URL": "http://64.176.81.197:3011/api/v1"
       }
     },
     "production": {
       "autoIncrement": true,
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://api.yourdomain.com/api/v1"
+        "EXPO_PUBLIC_API_URL": "http://64.176.81.197:3011/api/v1"
       }
     }
   },

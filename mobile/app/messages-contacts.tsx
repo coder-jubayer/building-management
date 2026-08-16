@@ -14,6 +14,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, spacing, borderRadius, shadows } from '../src/theme';
 import { Button, Input } from '../src/components/ui';
+import { PopupHeader } from '../src/components/PopupHeader';
 import {
   addInboxGroupMembers,
   createInboxGroup,
@@ -292,7 +293,7 @@ export default function MessagesContactsScreen() {
         <View style={styles.modalWrap}>
           <Pressable style={styles.backdrop} onPress={() => setNameOpen(false)} />
           <View style={styles.sheet}>
-            <Text style={styles.sheetTitle}>Name this group</Text>
+            <PopupHeader title="Name this group" onClose={() => setNameOpen(false)} />
             <Input value={groupName} onChangeText={setGroupName} placeholder="Committee chat" autoFocus />
             <Button title="Create group" loading={saving} onPress={() => void createGroup()} />
             <Button title="Cancel" variant="outline" onPress={() => setNameOpen(false)} />

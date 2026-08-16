@@ -48,6 +48,12 @@ See [docs/GETTING_STARTED.md](./docs/GETTING_STARTED.md) for full instructions.
 
 See [DEVELOPMENT_ROADMAP.md](./DEVELOPMENT_ROADMAP.md) for the full build plan.
 
+## Production
+
+Docker on Ubuntu (isolated from other VPS projects): see [DEPLOY.md](./DEPLOY.md).
+
+API health: `http://64.176.81.197:3011/api/v1/health`
+
 ## Repository
 
-https://github.com/coder-jubayer/BESITT
+https://github.com/coder-jubayer/building-management

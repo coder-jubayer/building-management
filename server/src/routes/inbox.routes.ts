@@ -4,13 +4,13 @@ import { Router, Response, NextFunction } from 'express';
 import multer from 'multer';
 import { User } from '../models/User';
 import { Building } from '../models/Building';
-import { InboxThread } from '../models/InboxThread';
+import { InboxThread, IInboxThreadDocument } from '../models/InboxThread';
 import { InboxMessage } from '../models/InboxMessage';
 import { InboxGroup, IInboxGroupDocument } from '../models/InboxGroup';
 import { InboxGroupMessage } from '../models/InboxGroupMessage';
 import { AppError } from '../middleware/errorHandler';
 import { AuthRequest, requireAuth } from '../middleware/auth';
-import { ROLE_LABELS, isAppAdmin, UserRole } from '../constants/roles';
+import { ROLE_LABELS, isAppAdmin, isCommittee, UserRole } from '../constants/roles';
 import {
   ensureUploadDirs,
   groupsUploadDir,
@@ -97,6 +97,55 @@ export type InboxCategory = 'committee' | 'resident' | 'guard';
 
 function pairIds(a: string, b: string): [string, string] {
   return a < b ? [a, b] : [b, a];
+}
+
+function inboxThreadDto(
+  thread: IInboxThreadDocument,
+  actor: { userId: string; role: string },
+) {
+  const json = thread.toSafeJSON(actor.userId);
+  return {
+    ...json,
+    pinned: isCommittee(actor.role) && json.otherRole === 'building_admin',
+  };
+}
+
+function isPinnedAdminThread(thread: IInboxThreadDocument, actorId: string, actorRole: string) {
+  const otherRole = thread.userA === actorId ? thread.userBRole : thread.userARole;
+  return isCommittee(actorRole) && otherRole === 'building_admin';
+}
+
+async function ensureCommitteeAdminThreads(actor: { userId: string; role: string; buildingId?: string }) {
+  if (!isCommittee(actor.role) || !actor.buildingId) return;
+
+  const [me, admins] = await Promise.all([
+    User.findById(actor.userId),
+    User.find({
+      buildingId: actor.buildingId,
+      role: 'building_admin',
+      isActive: true,
+      _id: { $ne: actor.userId },
+    }),
+  ]);
+  if (!me || !admins.length) return;
+
+  for (const admin of admins) {
+    const otherId = admin._id.toString();
+    const [userA, userB] = pairIds(actor.userId, otherId);
+    const existing = await InboxThread.findOne({ userA, userB });
+    if (existing) continue;
+
+    const aIsMe = userA === actor.userId;
+    await InboxThread.create({
+      buildingId: actor.buildingId,
+      userA,
+      userB,
+      userAName: aIsMe ? me.name : admin.name,
+      userBName: aIsMe ? admin.name : me.name,
+      userARole: aIsMe ? me.role : admin.role,
+      userBRole: aIsMe ? admin.role : me.role,
+    });
+  }
 }
 
 function inboxCategory(role?: string | null): InboxCategory | null {
@@ -230,15 +279,26 @@ router.get('/directory', async (req: AuthRequest, res: Response, next: NextFunct
 router.get('/threads', async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const actor = req.user!;
+    await ensureCommitteeAdminThreads(actor);
+
     const threads = await InboxThread.find({
       $or: [{ userA: actor.userId }, { userB: actor.userId }],
-    })
-      .sort({ lastMessageAt: -1, updatedAt: -1 })
-      .limit(200);
+    }).limit(250);
+
+    const visible = threads
+      .filter((thread) => Boolean(thread.lastMessageAt) || isPinnedAdminThread(thread, actor.userId, actor.role))
+      .map((thread) => inboxThreadDto(thread, actor))
+      .sort((a, b) => {
+        if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;
+        const left = a.lastMessageAt ? new Date(a.lastMessageAt).getTime() : 0;
+        const right = b.lastMessageAt ? new Date(b.lastMessageAt).getTime() : 0;
+        return right - left;
+      })
+      .slice(0, 200);
 
     res.json({
       success: true,
-      data: { threads: threads.map((thread) => thread.toSafeJSON(actor.userId)) },
+      data: { threads: visible },
     });
   } catch (error) {
     next(error);
@@ -285,7 +345,7 @@ router.post('/threads', async (req: AuthRequest, res: Response, next: NextFuncti
     res.status(201).json({
       success: true,
       data: {
-        thread: thread.toSafeJSON(actor.userId),
+        thread: inboxThreadDto(thread, actor),
         messages: messages.map((item) => inboxMessageDto(req, item, actor.userId)),
       },
     });
@@ -309,7 +369,7 @@ router.get('/threads/:threadId', async (req: AuthRequest, res: Response, next: N
     res.json({
       success: true,
       data: {
-        thread: thread.toSafeJSON(actor.userId),
+        thread: inboxThreadDto(thread, actor),
         messages: messages.map((item) => inboxMessageDto(req, item, actor.userId)),
       },
     });
@@ -354,7 +414,7 @@ router.post(
         success: true,
         data: {
           message: inboxMessageDto(req, message, actor.userId),
-          thread: thread.toSafeJSON(actor.userId),
+          thread: inboxThreadDto(thread, actor),
         },
       });
     } catch (error) {

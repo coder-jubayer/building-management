@@ -16,6 +16,7 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { PageHeader } from '../src/components/PageHeader';
+import { PopupHeader } from '../src/components/PopupHeader';
 import { Button, Input } from '../src/components/ui';
 import { colors, spacing, borderRadius, shadows } from '../src/theme';
 import { useAuthStore } from '../src/stores/auth.store';
@@ -350,7 +351,7 @@ export default function DirectoryScreen() {
             <View style={styles.sheetHandle} />
             {typeOpen ? (
               <>
-                <Text style={styles.sheetTitle}>New type</Text>
+                <PopupHeader title="New type" onClose={() => setCreateOpen(false)} />
                 <Text style={styles.sheetSubtitle}>Optional. Use this if none of the presets fit.</Text>
                 <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.form}>
                   <Input
@@ -369,7 +370,7 @@ export default function DirectoryScreen() {
               </>
             ) : (
               <>
-            <Text style={styles.sheetTitle}>Add contact</Text>
+            <PopupHeader title="Add contact" onClose={() => setCreateOpen(false)} />
             <Text style={styles.sheetSubtitle}>Residents can tap to call this number.</Text>
             <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.form}>
               <Text style={styles.fieldLabel}>Type (optional)</Text>
@@ -429,7 +430,7 @@ export default function DirectoryScreen() {
         <View style={styles.confirmWrap}>
           <Pressable style={styles.backdrop} onPress={() => setDeleteTarget(null)} />
           <View style={styles.confirmCard}>
-            <Text style={styles.confirmTitle}>Delete contact?</Text>
+            <PopupHeader title="Delete contact?" onClose={() => setDeleteTarget(null)} />
             <Text style={styles.confirmBody}>
               {deleteTarget ? `${deleteTarget.name} (${deleteTarget.phone}) will be removed.` : ''}
             </Text>

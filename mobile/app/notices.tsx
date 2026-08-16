@@ -14,6 +14,7 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { PageHeader } from '../src/components/PageHeader';
+import { PopupHeader } from '../src/components/PopupHeader';
 import { Button, Input } from '../src/components/ui';
 import { colors, spacing, borderRadius, shadows } from '../src/theme';
 import { useAuthStore } from '../src/stores/auth.store';
@@ -215,7 +216,7 @@ export default function NoticesScreen() {
           <Pressable style={styles.backdrop} onPress={() => setCreateOpen(false)} />
           <View style={[styles.sheet, { paddingBottom: insets.bottom + spacing.lg }]}>
             <View style={styles.sheetHandle} />
-            <Text style={styles.sheetTitle}>New notice</Text>
+            <PopupHeader title="New notice" onClose={() => setCreateOpen(false)} />
             <Text style={styles.sheetSubtitle}>Residents in this building will be notified.</Text>
             <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.form}>
               <Input label="Title" value={title} onChangeText={setTitle} placeholder="Water supply update" />
@@ -263,7 +264,7 @@ export default function NoticesScreen() {
         <View style={styles.confirmWrap}>
           <Pressable style={styles.backdrop} onPress={() => setDeleteTarget(null)} />
           <View style={styles.confirmCard}>
-            <Text style={styles.confirmTitle}>Delete notice?</Text>
+            <PopupHeader title="Delete notice?" onClose={() => setDeleteTarget(null)} />
             <Text style={styles.confirmBody}>{deleteTarget?.title} will be removed for everyone.</Text>
             <View style={styles.confirmActions}>
               <Button title="Cancel" variant="outline" onPress={() => setDeleteTarget(null)} />

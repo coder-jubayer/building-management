@@ -18,6 +18,7 @@ import { useFocusEffect, useNavigation, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { PageHeader } from '../src/components/PageHeader';
+import { PopupHeader } from '../src/components/PopupHeader';
 import { Button } from '../src/components/ui';
 import { colors, spacing, borderRadius, shadows } from '../src/theme';
 import { useAuthStore } from '../src/stores/auth.store';
@@ -596,15 +597,8 @@ export default function AmenitiesScreen() {
             <Pressable style={styles.backdrop} onPress={() => setSettingsOpen(false)} />
             <View style={[styles.sheet, { paddingBottom: insets.bottom + spacing.md }]}>
               <View style={styles.sheetHandle} />
-              <View style={styles.sheetHeader}>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.sheetTitle}>Settings</Text>
-                  <Text style={styles.sheetSubtitle}>{name}</Text>
-                </View>
-                <Pressable onPress={() => setSettingsOpen(false)} hitSlop={8} style={styles.sheetClose}>
-                  <Ionicons name="close" size={20} color={colors.textSecondary} />
-                </Pressable>
-              </View>
+              <PopupHeader title="Settings" onClose={() => setSettingsOpen(false)} />
+              <Text style={styles.sheetSubtitle}>{name}</Text>
               <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.sheetBody}>
                 <View style={styles.settingsPanel}>
                   <View style={styles.settingsPanelHead}>

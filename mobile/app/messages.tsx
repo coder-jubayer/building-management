@@ -20,6 +20,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, spacing, borderRadius, shadows } from '../src/theme';
 import { MediaViewer, MediaViewerItem } from '../src/components/MediaViewer';
+import { PopupHeader } from '../src/components/PopupHeader';
 import { Button, Input } from '../src/components/ui';
 import {
   contactSeller,
@@ -70,6 +71,12 @@ function recency(item: { lastMessageAt?: string; updatedAt?: string }) {
 
 function sortByRecency<T extends { lastMessageAt?: string; updatedAt?: string }>(items: T[]) {
   return [...items].sort((a, b) => recency(b) - recency(a));
+}
+
+function sortInbox(items: InboxThread[]) {
+  const pinned = items.filter((item) => item.pinned);
+  const rest = sortByRecency(items.filter((item) => !item.pinned));
+  return [...pinned, ...rest];
 }
 
 function SeenTicks({ seen }: { seen?: boolean }) {
@@ -153,7 +160,7 @@ export default function MessagesScreen() {
         fetchInboxGroups(),
       ]);
       setMarketThreads(sortByRecency(market));
-      setInboxThreads(sortByRecency(inbox));
+      setInboxThreads(sortInbox(inbox.filter((thread) => thread.pinned || Boolean(thread.lastMessage))));
       setGroups(sortByRecency(groupList));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load messages');
@@ -188,7 +195,19 @@ export default function MessagesScreen() {
     setChatImage(undefined);
     setChatPhone(phone);
     setMessages(nextMessages);
-    setInboxThreads((current) => sortByRecency([{ ...thread, unread: 0 }, ...current.filter((item) => item.id !== thread.id)]));
+    setInboxThreads((current) => {
+      const existing = current.find((item) => item.id === thread.id);
+      const next = {
+        ...thread,
+        unread: 0,
+        pinned: Boolean(thread.pinned || existing?.pinned),
+      };
+      return sortInbox(
+        [next, ...current.filter((item) => item.id !== thread.id)].filter(
+          (item) => item.pinned || Boolean(item.lastMessage),
+        ),
+      );
+    });
   };
 
   const applyGroup = (group: InboxGroup, nextMessages: InboxGroupMessage[]) => {
@@ -343,9 +362,11 @@ export default function MessagesScreen() {
       } else if (chatKind === 'inbox') {
         const result = await sendInboxMessage(chatId, text, photo || undefined);
         setMessages((current) => [...current, result.message]);
-        setInboxThreads((current) =>
-          sortByRecency([result.thread, ...current.filter((item) => item.id !== result.thread.id)]),
-        );
+        setInboxThreads((current) => {
+          const existing = current.find((item) => item.id === result.thread.id);
+          const next = { ...result.thread, pinned: Boolean(result.thread.pinned || existing?.pinned) };
+          return sortInbox([next, ...current.filter((item) => item.id !== result.thread.id)]);
+        });
       } else {
         const result = await sendInboxGroupMessage(chatId, text, photo || undefined);
         setMessages((current) => [...current, result.message]);
@@ -569,7 +590,7 @@ export default function MessagesScreen() {
           <View style={styles.modalWrap}>
             <Pressable style={styles.backdrop} onPress={() => setMenuOpen(false)} />
             <View style={styles.menuSheet}>
-              <Text style={styles.sheetTitle}>Group options</Text>
+              <PopupHeader title="Group options" onClose={() => setMenuOpen(false)} />
               <Pressable
                 style={styles.menuRow}
                 onPress={() => {
@@ -624,7 +645,7 @@ export default function MessagesScreen() {
             <Pressable style={styles.backdrop} onPress={() => setMembersOpen(false)} />
             <View style={[styles.membersSheet, { paddingBottom: insets.bottom + spacing.md }]}>
               <View style={styles.sheetHandle} />
-              <Text style={styles.sheetTitle}>Members</Text>
+              <PopupHeader title="Members" onClose={() => setMembersOpen(false)} />
               <Text style={styles.membersHint}>{activeGroup?.memberCount ?? 0} people in this group</Text>
               <ScrollView style={styles.membersList}>
                 {(activeGroup?.members ?? []).map((member) => (
@@ -654,7 +675,7 @@ export default function MessagesScreen() {
           <View style={styles.modalWrap}>
             <Pressable style={styles.backdrop} onPress={() => setRenameOpen(false)} />
             <View style={styles.sheet}>
-              <Text style={styles.sheetTitle}>Rename group</Text>
+              <PopupHeader title="Rename group" onClose={() => setRenameOpen(false)} />
               <Input value={renameValue} onChangeText={setRenameValue} placeholder="Group name" />
               <Button title="Save" loading={renaming} onPress={() => void saveRename()} />
               <Button title="Cancel" variant="outline" onPress={() => setRenameOpen(false)} />
@@ -777,7 +798,11 @@ export default function MessagesScreen() {
               <Text style={styles.muted}>No conversations yet. Tap search to add people.</Text>
             ) : null}
             {inboxThreads.map((thread) => (
-              <Pressable key={thread.id} style={styles.chatRow} onPress={() => void openInboxChat(thread.id)}>
+              <Pressable
+                key={thread.id}
+                style={[styles.chatRow, thread.pinned && styles.chatRowPinned]}
+                onPress={() => void openInboxChat(thread.id)}
+              >
                 <View style={styles.rowAvatar}>
                   <Text style={styles.rowInitial}>{(thread.otherName || 'U').trim().charAt(0).toUpperCase()}</Text>
                 </View>
@@ -786,11 +811,18 @@ export default function MessagesScreen() {
                     <Text style={styles.rowName} numberOfLines={1}>
                       {thread.otherName}
                     </Text>
-                    <Text style={styles.rowTime}>{formatChatTime(thread.lastMessageAt || thread.updatedAt)}</Text>
+                    <View style={styles.rowMeta}>
+                      {thread.pinned ? <Ionicons name="pin" size={13} color={colors.primary} /> : null}
+                      <Text style={[styles.rowTime, thread.pinned && styles.pinText]}>
+                        {thread.pinned && !thread.lastMessageAt
+                          ? 'Pinned'
+                          : formatChatTime(thread.lastMessageAt || thread.updatedAt)}
+                      </Text>
+                    </View>
                   </View>
                   <Text style={styles.rowSub}>{roleLabel(thread.otherRole)}</Text>
                   <Text style={styles.rowMsg} numberOfLines={1}>
-                    {thread.lastMessage || 'Say hello'}
+                    {thread.lastMessage || (thread.pinned ? 'Building admin' : 'Say hello')}
                   </Text>
                 </View>
                 {thread.unread > 0 ? (
@@ -960,6 +992,10 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     ...shadows.sm,
   },
+  chatRowPinned: {
+    backgroundColor: colors.primaryLight,
+    borderColor: colors.primaryMuted,
+  },
   rowAvatar: {
     width: 48,
     height: 48,
@@ -970,9 +1006,11 @@ const styles = StyleSheet.create({
   },
   rowInitial: { fontWeight: '800', color: colors.primary, fontSize: 18 },
   rowImage: { width: 48, height: 48, borderRadius: 14, backgroundColor: colors.slate100 },
-  rowTop: { flexDirection: 'row', justifyContent: 'space-between', gap: 8 },
+  rowTop: { flexDirection: 'row', justifyContent: 'space-between', gap: 8, alignItems: 'center' },
+  rowMeta: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   rowName: { flex: 1, fontWeight: '700', color: colors.text },
   rowTime: { fontSize: 11, color: colors.textMuted },
+  pinText: { fontSize: 11, fontWeight: '700', color: colors.primary },
   rowSub: { fontSize: 12, color: colors.textSecondary, marginTop: 2 },
   rowMsg: { fontSize: 13, color: colors.textSecondary, marginTop: 2 },
   unread: {

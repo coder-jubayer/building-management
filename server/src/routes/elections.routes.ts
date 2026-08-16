@@ -112,6 +112,7 @@ async function electionDto(
     showResults: election.showResults,
     canManage: manage,
     canVote: canCastVote(actor.role) && status === 'open' && !myVote,
+    canChangeVote: canCastVote(actor.role) && status === 'open' && Boolean(myVote),
     hasVoted: Boolean(myVote),
     myCandidateId: myVote?.candidateId,
     resultsVisible: showCounts,
@@ -379,6 +380,36 @@ router.post('/:id/vote', async (req: AuthRequest, res: Response, next: NextFunct
     res.status(201).json({
       success: true,
       message: 'Vote recorded',
+      data: await electionDto(req, election, actor, true),
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.delete('/:id/vote', async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const actor = req.user!;
+    if (!canCastVote(actor.role)) {
+      throw new AppError(403, 'Only residents can change a vote');
+    }
+
+    const election = await loadElectionForActor(actor, req.params.id);
+    if (electionStatus(election.startsAt, election.endsAt) !== 'open') {
+      throw new AppError(400, 'You can only change a vote while voting is open');
+    }
+
+    const existing = await ElectionVote.findOneAndDelete({
+      electionId: election._id.toString(),
+      userId: actor.userId,
+    });
+    if (!existing) {
+      throw new AppError(404, 'You have not voted in this election');
+    }
+
+    res.json({
+      success: true,
+      message: 'Vote withdrawn',
       data: await electionDto(req, election, actor, true),
     });
   } catch (error) {

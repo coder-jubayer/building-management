@@ -94,11 +94,11 @@ export function canManageAmenityBookings(role?: string | null): boolean {
 }
 
 export function canCreateGuestVisits(role?: string | null): boolean {
-  return role === 'guard' || isBuildingAdmin(role) || isAppAdmin(role);
+  return role === 'guard';
 }
 
 export function canViewBuildingGuests(role?: string | null): boolean {
-  return canCreateGuestVisits(role);
+  return role === 'guard' || isBuildingAdmin(role) || isAppAdmin(role);
 }
 
 export function canDecideGuestVisits(role?: string | null): boolean {

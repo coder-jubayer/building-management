@@ -18,11 +18,13 @@ import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { PageHeader } from '../src/components/PageHeader';
+import { PopupHeader } from '../src/components/PopupHeader';
 import { Button, Input } from '../src/components/ui';
 import { colors, spacing, borderRadius, shadows } from '../src/theme';
 import { useAuthStore } from '../src/stores/auth.store';
 import {
   addCandidate,
+  cancelVote,
   castVote,
   createElection,
   deleteCandidate,
@@ -40,22 +42,54 @@ import {
   isAppAdmin,
 } from '../src/types';
 
-function pad(value: number) {
-  return String(value).padStart(2, '0');
+const BD_OFFSET_HOURS = 6;
+
+function toYmdBd(date: Date) {
+  return date.toLocaleDateString('en-CA', { timeZone: 'Asia/Dhaka' });
 }
 
-function toYmd(date: Date) {
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+function toTime12Bd(date: Date) {
+  return date.toLocaleTimeString('en-US', {
+    timeZone: 'Asia/Dhaka',
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  });
 }
 
-function toHm(date: Date) {
-  return `${pad(date.getHours())}:${pad(date.getMinutes())}`;
+function parseTime12(value: string): { hour: number; minute: number } | null {
+  const trimmed = value
+    .trim()
+    .toUpperCase()
+    .replace(/\./g, '')
+    .replace(/[\u202F\u00A0]/g, ' ')
+    .replace(/\s+/g, ' ');
+  const match12 = trimmed.match(/^(\d{1,2})(?::(\d{2}))?\s*(AM|PM)$/);
+  if (match12) {
+    let hour = Number(match12[1]);
+    const minute = Number(match12[2] ?? '0');
+    const period = match12[3];
+    if (hour < 1 || hour > 12 || minute > 59) return null;
+    if (period === 'AM') {
+      if (hour === 12) hour = 0;
+    } else if (hour !== 12) {
+      hour += 12;
+    }
+    return { hour, minute };
+  }
+  const match24 = trimmed.match(/^(\d{1,2}):(\d{2})$/);
+  if (!match24) return null;
+  const hour = Number(match24[1]);
+  const minute = Number(match24[2]);
+  if (hour > 23 || minute > 59) return null;
+  return { hour, minute };
 }
 
-function combineLocal(date: string, time: string) {
+function combineBd(date: string, time: string) {
   const [year, month, day] = date.split('-').map(Number);
-  const [hour, minute] = time.split(':').map(Number);
-  return new Date(year || 0, (month || 1) - 1, day || 1, hour || 0, minute || 0, 0, 0);
+  const parsed = parseTime12(time);
+  if (!year || !month || !day || !parsed) return new Date(NaN);
+  return new Date(Date.UTC(year, month - 1, day, parsed.hour - BD_OFFSET_HOURS, parsed.minute, 0, 0));
 }
 
 function initials(name: string) {
@@ -98,10 +132,10 @@ export default function VotingScreen() {
   const [title, setTitle] = useState('');
   const [position, setPosition] = useState('');
   const [description, setDescription] = useState('');
-  const [startDate, setStartDate] = useState(toYmd(new Date()));
-  const [startTime, setStartTime] = useState('00:00');
-  const [endDate, setEndDate] = useState(toYmd(new Date(Date.now() + 7 * 86_400_000)));
-  const [endTime, setEndTime] = useState('23:59');
+  const [startDate, setStartDate] = useState(toYmdBd(new Date()));
+  const [startTime, setStartTime] = useState('12:00 AM');
+  const [endDate, setEndDate] = useState(toYmdBd(new Date(Date.now() + 7 * 86_400_000)));
+  const [endTime, setEndTime] = useState('11:59 PM');
   const [showResults, setShowResults] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
@@ -118,6 +152,7 @@ export default function VotingScreen() {
   const [deleteTarget, setDeleteTarget] = useState<'election' | ElectionCandidate | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [voteTarget, setVoteTarget] = useState<ElectionCandidate | null>(null);
+  const [withdrawOpen, setWithdrawOpen] = useState(false);
 
   const showToast = (message: string) => {
     setToast(message);
@@ -126,7 +161,7 @@ export default function VotingScreen() {
 
   const applyDetail = (election: ElectionSummary, nextCandidates: ElectionCandidate[]) => {
     setSelected(election);
-    setCandidates(nextCandidates);
+    setCandidates(nextCandidates ?? []);
     setElections((current) => current.map((item) => (item.id === election.id ? election : item)));
   };
 
@@ -180,10 +215,10 @@ export default function VotingScreen() {
     setTitle('Committee Election');
     setPosition('President');
     setDescription('');
-    setStartDate(toYmd(now));
-    setStartTime(toHm(now));
-    setEndDate(toYmd(new Date(now.getTime() + 7 * 86_400_000)));
-    setEndTime('23:59');
+    setStartDate(toYmdBd(now));
+    setStartTime(toTime12Bd(now));
+    setEndDate(toYmdBd(new Date(now.getTime() + 7 * 86_400_000)));
+    setEndTime('11:59 PM');
     setShowResults(false);
     setFormError(null);
   };
@@ -206,10 +241,10 @@ export default function VotingScreen() {
       setFormError('Enter the position, e.g. President.');
       return;
     }
-    const startsAt = combineLocal(startDate, startTime);
-    const endsAt = combineLocal(endDate, endTime);
+    const startsAt = combineBd(startDate, startTime);
+    const endsAt = combineBd(endDate, endTime);
     if (Number.isNaN(startsAt.getTime()) || Number.isNaN(endsAt.getTime())) {
-      setFormError('Use dates like 2026-08-15 and times like 18:00.');
+      setFormError('Use dates like 2026-08-15 and times like 9:00 AM.');
       return;
     }
     if (endsAt <= startsAt) {
@@ -251,10 +286,10 @@ export default function VotingScreen() {
     setTitle(selected.title);
     setPosition(selected.position);
     setDescription(selected.description ?? '');
-    setStartDate(toYmd(start));
-    setStartTime(toHm(start));
-    setEndDate(toYmd(end));
-    setEndTime(toHm(end));
+    setStartDate(toYmdBd(start));
+    setStartTime(toTime12Bd(start));
+    setEndDate(toYmdBd(end));
+    setEndTime(toTime12Bd(end));
     setShowResults(selected.showResults);
     setFormError(null);
     setEditOpen(true);
@@ -266,10 +301,10 @@ export default function VotingScreen() {
       setFormError('Title and position are required.');
       return;
     }
-    const startsAt = combineLocal(startDate, startTime);
-    const endsAt = combineLocal(endDate, endTime);
+    const startsAt = combineBd(startDate, startTime);
+    const endsAt = combineBd(endDate, endTime);
     if (Number.isNaN(startsAt.getTime()) || Number.isNaN(endsAt.getTime()) || endsAt <= startsAt) {
-      setFormError('Check the voting period dates.');
+      setFormError('Use Bangladesh times like 9:00 AM.');
       return;
     }
     setSavingEdit(true);
@@ -380,6 +415,21 @@ export default function VotingScreen() {
     }
   };
 
+  const handleWithdraw = async () => {
+    if (!selected) return;
+    setVotingId('withdraw');
+    try {
+      const detail = await cancelVote(selected.id);
+      setWithdrawOpen(false);
+      applyDetail(detail.election, detail.candidates);
+      showToast('Vote cancelled. You can vote again.');
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : 'Could not cancel vote');
+    } finally {
+      setVotingId(null);
+    }
+  };
+
   if (selected) {
     const tone = STATUS_STYLE[selected.status];
     return (
@@ -475,8 +525,16 @@ export default function VotingScreen() {
                     style={[styles.voteBtn, selectedVote && styles.voteBtnSelected, locked && styles.voteBtnLocked]}
                   >
                     <Text style={[styles.voteText, selectedVote && { color: colors.white }, locked && { color: colors.textMuted }]}>
-                      {selectedVote ? 'Voted' : 'Vote'}
+                      Vote
                     </Text>
+                  </Pressable>
+                ) : selected.canChangeVote && selectedVote ? (
+                  <Pressable
+                    disabled={votingId === 'withdraw'}
+                    onPress={() => setWithdrawOpen(true)}
+                    style={styles.voteBtnCancel}
+                  >
+                    <Text style={styles.voteCancelText}>Cancel</Text>
                   </Pressable>
                 ) : selected.hasVoted ? (
                   <View style={[styles.voteBtn, selectedVote ? styles.voteBtnSelected : styles.voteBtnLocked]}>
@@ -507,13 +565,30 @@ export default function VotingScreen() {
   function sheetModals() {
     return (
       <>
-        <Modal visible={createOpen || editOpen} animationType="slide" transparent onRequestClose={() => { setCreateOpen(false); setEditOpen(false); }}>
-          <KeyboardAvoidingView style={styles.modalWrap} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-            <Pressable style={styles.backdrop} onPress={() => { setCreateOpen(false); setEditOpen(false); }} />
+        <Modal
+          visible={createOpen || editOpen}
+          animationType="fade"
+          transparent
+          statusBarTranslucent
+          onRequestClose={() => { setCreateOpen(false); setEditOpen(false); }}
+        >
+          <View style={styles.modalRoot}>
+            <Pressable style={StyleSheet.absoluteFill} onPress={() => { setCreateOpen(false); setEditOpen(false); }} />
+            <KeyboardAvoidingView
+              style={styles.modalWrap}
+              behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+              pointerEvents="box-none"
+            >
             <View style={[styles.sheet, { paddingBottom: insets.bottom + spacing.lg }]}>
               <View style={styles.sheetHandle} />
-              <Text style={styles.sheetTitle}>{editOpen ? 'Edit election' : 'Create election'}</Text>
-              <Text style={styles.sheetSubtitle}>Set the position and voting period. Residents can vote once.</Text>
+              <PopupHeader
+                title={editOpen ? 'Edit election' : 'Create election'}
+                onClose={() => {
+                  setCreateOpen(false);
+                  setEditOpen(false);
+                }}
+              />
+              <Text style={styles.sheetSubtitle}>Set the position and voting period in Bangladesh time (12-hour).</Text>
               <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.form}>
                 <Input label="Title" value={title} onChangeText={setTitle} placeholder="Committee Election 2026" />
                 <Input label="Position" value={position} onChangeText={setPosition} placeholder="President" />
@@ -527,16 +602,16 @@ export default function VotingScreen() {
                   <View style={{ flex: 1 }}>
                     <Input label="Start date" value={startDate} onChangeText={setStartDate} placeholder="2026-08-15" />
                   </View>
-                  <View style={{ width: 110 }}>
-                    <Input label="Time" value={startTime} onChangeText={setStartTime} placeholder="09:00" />
+                  <View style={{ width: 128 }}>
+                    <Input label="Time" value={startTime} onChangeText={setStartTime} placeholder="9:00 AM" />
                   </View>
                 </View>
                 <View style={styles.dateRow}>
                   <View style={{ flex: 1 }}>
                     <Input label="End date" value={endDate} onChangeText={setEndDate} placeholder="2026-08-22" />
                   </View>
-                  <View style={{ width: 110 }}>
-                    <Input label="Time" value={endTime} onChangeText={setEndTime} placeholder="23:59" />
+                  <View style={{ width: 128 }}>
+                    <Input label="Time" value={endTime} onChangeText={setEndTime} placeholder="11:59 PM" />
                   </View>
                 </View>
                 <View style={styles.switchRow}>
@@ -555,7 +630,8 @@ export default function VotingScreen() {
                 <Button title="Cancel" variant="outline" onPress={() => { setCreateOpen(false); setEditOpen(false); }} />
               </ScrollView>
             </View>
-          </KeyboardAvoidingView>
+            </KeyboardAvoidingView>
+          </View>
         </Modal>
 
         <Modal visible={candidateOpen} animationType="slide" transparent onRequestClose={() => setCandidateOpen(false)}>
@@ -563,7 +639,7 @@ export default function VotingScreen() {
             <Pressable style={styles.backdrop} onPress={() => setCandidateOpen(false)} />
             <View style={[styles.sheet, { paddingBottom: insets.bottom + spacing.lg }]}>
               <View style={styles.sheetHandle} />
-              <Text style={styles.sheetTitle}>Add candidate</Text>
+              <PopupHeader title="Add candidate" onClose={() => setCandidateOpen(false)} />
               <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.form}>
                 <Input label="Name" value={candidateName} onChangeText={setCandidateName} placeholder="Sarah Jenkins" />
                 <Input label="Apt / unit (optional)" value={candidateUnit} onChangeText={setCandidateUnit} placeholder="B-204" />
@@ -588,9 +664,9 @@ export default function VotingScreen() {
           <View style={styles.confirmWrap}>
             <Pressable style={styles.backdrop} onPress={() => setVoteTarget(null)} />
             <View style={styles.confirmCard}>
-              <Text style={styles.confirmTitle}>Cast your vote?</Text>
+              <PopupHeader title="Cast your vote?" onClose={() => setVoteTarget(null)} />
               <Text style={styles.confirmBody}>
-                {voteTarget ? `Vote for ${voteTarget.name}. You can only vote once.` : ''}
+                {voteTarget ? `Vote for ${voteTarget.name}. You can cancel later if you change your mind.` : ''}
               </Text>
               <View style={styles.confirmActions}>
                 <Button title="Cancel" variant="outline" onPress={() => setVoteTarget(null)} />
@@ -600,13 +676,30 @@ export default function VotingScreen() {
           </View>
         </Modal>
 
+        <Modal visible={withdrawOpen} animationType="fade" transparent onRequestClose={() => setWithdrawOpen(false)}>
+          <View style={styles.confirmWrap}>
+            <Pressable style={styles.backdrop} onPress={() => setWithdrawOpen(false)} />
+            <View style={styles.confirmCard}>
+              <PopupHeader title="Cancel your vote?" onClose={() => setWithdrawOpen(false)} />
+              <Text style={styles.confirmBody}>
+                Your current vote will be removed. You can then vote for someone else.
+              </Text>
+              <View style={styles.confirmActions}>
+                <Button title="Keep vote" variant="outline" onPress={() => setWithdrawOpen(false)} />
+                <Button title="Cancel vote" loading={votingId === 'withdraw'} onPress={() => void handleWithdraw()} />
+              </View>
+            </View>
+          </View>
+        </Modal>
+
         <Modal visible={!!deleteTarget} animationType="fade" transparent onRequestClose={() => setDeleteTarget(null)}>
           <View style={styles.confirmWrap}>
             <Pressable style={styles.backdrop} onPress={() => setDeleteTarget(null)} />
             <View style={styles.confirmCard}>
-              <Text style={styles.confirmTitle}>
-                {deleteTarget === 'election' ? 'Delete election?' : 'Remove candidate?'}
-              </Text>
+              <PopupHeader
+                title={deleteTarget === 'election' ? 'Delete election?' : 'Remove candidate?'}
+                onClose={() => setDeleteTarget(null)}
+              />
               <Text style={styles.confirmBody}>
                 {deleteTarget === 'election'
                   ? `${selected?.title ?? 'This election'} and all votes will be removed.`
@@ -686,7 +779,11 @@ export default function VotingScreen() {
               </View>
               <Text style={styles.listMeta}>{election.position} · {election.candidateCount} candidate{election.candidateCount === 1 ? '' : 's'}</Text>
               <Text style={styles.listPeriod}>{election.periodLabel}</Text>
-              {election.hasVoted ? <Text style={styles.votedHint}>You voted</Text> : null}
+              {election.hasVoted ? (
+                <Text style={styles.votedHint}>
+                  {election.status === 'open' ? 'You voted · you can cancel and change it' : 'You voted'}
+                </Text>
+              ) : null}
             </Pressable>
           );
         })}
@@ -810,6 +907,13 @@ const styles = StyleSheet.create({
   },
   voteBtnSelected: { backgroundColor: colors.primary },
   voteBtnLocked: { backgroundColor: colors.slate100, opacity: 0.5 },
+  voteBtnCancel: {
+    backgroundColor: colors.errorLight,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: borderRadius.md,
+  },
+  voteCancelText: { fontWeight: '700', fontSize: 13, color: colors.error },
   voteText: { fontWeight: '600', fontSize: 13, color: colors.primaryDark },
   iconDanger: {
     width: 32,
@@ -831,7 +935,12 @@ const styles = StyleSheet.create({
     ...shadows.md,
   },
   toastText: { color: colors.white, textAlign: 'center', fontWeight: '600' },
-  modalWrap: { flex: 1, justifyContent: 'flex-end' },
+  modalRoot: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0, 0, 0, 0.55)',
+  },
+  modalWrap: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'transparent' },
   backdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.4)' },
   sheet: {
     backgroundColor: colors.surface,

@@ -4,9 +4,24 @@ import { env } from '../config/env';
 export async function connectDatabase(): Promise<void> {
   mongoose.set('strictQuery', true);
 
-  await mongoose.connect(env.mongodbUri);
+  const maxAttempts = 12;
+  let lastError: unknown;
 
-  console.log(`MongoDB connected (${env.isProduction ? 'production' : 'development'})`);
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    try {
+      await mongoose.connect(env.mongodbUri);
+      console.log(`MongoDB connected (${env.isProduction ? 'production' : 'development'})`);
+      return;
+    } catch (error) {
+      lastError = error;
+      console.error(`MongoDB connect attempt ${attempt}/${maxAttempts} failed`);
+      if (attempt < maxAttempts) {
+        await new Promise((resolve) => setTimeout(resolve, 3000));
+      }
+    }
+  }
+
+  throw lastError;
 }
 
 export async function disconnectDatabase(): Promise<void> {

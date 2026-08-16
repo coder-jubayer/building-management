@@ -8,9 +8,9 @@ import { useAuthStore } from '../stores/auth.store';
 import { useGuestsStore } from '../stores/guests.store';
 
 const TABS = [
-  { name: 'home', label: 'Home', icon: 'home-outline' as const, iconActive: 'home' as const },
-  { name: 'community', label: 'Community', icon: 'people-outline' as const, iconActive: 'people' as const },
   { name: 'services', label: 'Services', icon: 'grid-outline' as const, iconActive: 'grid' as const },
+  { name: 'community', label: 'Community', icon: 'people-outline' as const, iconActive: 'people' as const },
+  { name: 'home', label: 'Home', icon: 'home-outline' as const, iconActive: 'home' as const },
   { name: 'guests', label: 'Guests', icon: 'shield-checkmark-outline' as const, iconActive: 'shield-checkmark' as const },
   { name: 'profile', label: 'Profile', icon: 'person-outline' as const, iconActive: 'person' as const },
 ];
@@ -78,7 +78,7 @@ export function CustomTabBar({ state, navigation }: BottomTabBarProps) {
               onPress={onPress}
               style={({ pressed }) => [styles.centerBtn, pressed && { transform: [{ scale: 0.95 }] }]}
             >
-              <Ionicons name="grid" size={28} color={colors.white} />
+              <Ionicons name="home" size={28} color={colors.white} />
             </Pressable>
           );
         }

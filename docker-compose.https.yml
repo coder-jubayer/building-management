@@ -1,0 +1,36 @@
+# Optional HTTPS front door when you have a domain pointing at this VPS.
+# Only enable if ports 80/443 are free. If nginx already uses them, use
+# deploy/nginx-building-management.conf.example instead.
+#
+#   docker compose --env-file .env -f docker-compose.yml -f docker-compose.https.yml up -d
+
+services:
+  caddy:
+    image: caddy:2.8-alpine
+    container_name: bm-caddy
+    restart: unless-stopped
+    environment:
+      DOMAIN: ${DOMAIN:?Set DOMAIN in .env}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - bm_caddy_data:/data
+      - bm_caddy_config:/config
+    networks:
+      - bm_internal
+    depends_on:
+      api:
+        condition: service_healthy
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  bm_caddy_data:
+    name: building-management_caddy_data
+  bm_caddy_config:
+    name: building-management_caddy_config

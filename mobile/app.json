@@ -7,6 +7,16 @@
     "icon": "./assets/icon.png",
     "scheme": "buildingmanagement",
     "userInterfaceStyle": "light",
+    "backgroundColor": "#FFFFFF",
+    "androidStatusBar": {
+      "barStyle": "dark-content",
+      "backgroundColor": "#FFFFFF",
+      "translucent": true
+    },
+    "androidNavigationBar": {
+      "barStyle": "dark-content",
+      "backgroundColor": "#FFFFFF"
+    },
     "newArchEnabled": true,
     "splash": {
       "image": "./assets/icon.png",
@@ -26,6 +36,7 @@
       "package": "com.buildingmanagement.app",
       "versionCode": 1,
       "usesCleartextTraffic": true,
+      "backgroundColor": "#FFFFFF",
       "adaptiveIcon": {
         "backgroundColor": "#1E40AF",
         "foregroundImage": "./assets/android-icon-foreground.png",
@@ -55,7 +66,7 @@
       "typedRoutes": false
     },
     "extra": {
-      "apiUrl": "http://192.168.0.103:3001/api/v1",
+      "apiUrl": "http://64.176.81.197:3011/api/v1",
       "router": {},
       "eas": {
         "projectId": "00000000-0000-0000-0000-000000000000"

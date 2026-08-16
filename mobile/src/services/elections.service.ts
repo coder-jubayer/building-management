@@ -109,6 +109,14 @@ export async function deleteCandidate(electionId: string, candidateId: string): 
   return data.data;
 }
 
+export async function cancelVote(electionId: string): Promise<ElectionDetailResponse> {
+  const { data } = await apiClient.delete<ApiResponse<ElectionDetailResponse>>(`/elections/${electionId}/vote`);
+  if (!data.success || !data.data?.election) {
+    throw new Error(data.message ?? 'Failed to cancel vote');
+  }
+  return data.data;
+}
+
 export async function castVote(electionId: string, candidateId: string): Promise<ElectionDetailResponse> {
   const { data } = await apiClient.post<ApiResponse<ElectionDetailResponse>>(`/elections/${electionId}/vote`, {
     candidateId,

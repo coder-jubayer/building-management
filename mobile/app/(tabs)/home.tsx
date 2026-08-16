@@ -72,16 +72,13 @@ export default function HomeScreen() {
     }, [resident]),
   );
   const firstName = user?.name?.split(' ')[0] ?? 'Resident';
-  const unitLabel = user?.unitNumber ?? '—';
 
   return (
     <View style={styles.container}>
       <View style={[styles.header, { paddingTop: insets.top + spacing.md }]}>
         <View>
           <Text style={styles.welcome}>Welcome back,</Text>
-          <Text style={styles.name}>
-            {firstName} <Text style={styles.unit}>• {unitLabel}</Text>
-          </Text>
+          <Text style={styles.name}>{firstName}</Text>
         </View>
         <Pressable onPress={() => router.push('/(tabs)/profile')} style={styles.avatarWrap}>
           <Image
@@ -113,7 +110,7 @@ export default function HomeScreen() {
           </View>
         </Pressable>
         <Pressable
-          style={[styles.summaryCard, { backgroundColor: colors.emerald }]}
+          style={[styles.summaryCard, { backgroundColor: colors.primary }]}
           onPress={() => router.push('/amenities')}
         >
           <Text style={styles.cardLabel}>AMENITY SLOT</Text>
@@ -263,7 +260,6 @@ const styles = StyleSheet.create({
   },
   welcome: { fontSize: 12, color: colors.textMuted, fontWeight: '500' },
   name: { fontSize: 18, fontWeight: '700', color: colors.text },
-  unit: { color: '#2563EB' },
   avatarWrap: { position: 'relative' },
   avatar: {
     width: 40,

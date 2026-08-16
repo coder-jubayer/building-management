@@ -15,6 +15,7 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { PageHeader } from '../src/components/PageHeader';
+import { PopupHeader } from '../src/components/PopupHeader';
 import { Button, Input } from '../src/components/ui';
 import { colors, spacing, borderRadius, shadows } from '../src/theme';
 import { useAuthStore } from '../src/stores/auth.store';
@@ -355,7 +356,7 @@ export default function ExpensesScreen() {
             <View style={styles.sheetHandle} />
             {categoryOpen ? (
               <>
-                <Text style={styles.sheetTitle}>New category</Text>
+                <PopupHeader title="New category" onClose={() => setCreateOpen(false)} />
                 <Text style={styles.sheetSubtitle}>It will appear in this building’s expense list.</Text>
                 <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.form}>
                   <Input
@@ -388,7 +389,7 @@ export default function ExpensesScreen() {
               </>
             ) : (
               <>
-                <Text style={styles.sheetTitle}>Add expense</Text>
+                <PopupHeader title="Add expense" onClose={() => setCreateOpen(false)} />
                 <Text style={styles.sheetSubtitle}>{monthLabel || 'This month'}</Text>
                 <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.form}>
                   <Text style={styles.fieldLabel}>Category</Text>
@@ -452,7 +453,7 @@ export default function ExpensesScreen() {
         <View style={styles.confirmWrap}>
           <Pressable style={styles.backdrop} onPress={() => setDeleteTarget(null)} />
           <View style={styles.confirmCard}>
-            <Text style={styles.confirmTitle}>Delete expense?</Text>
+            <PopupHeader title="Delete expense?" onClose={() => setDeleteTarget(null)} />
             <Text style={styles.confirmBody}>
               {deleteTarget
                 ? `${deleteTarget.categoryLabel} · ${formatMoney(deleteTarget.amount)} will be removed.`

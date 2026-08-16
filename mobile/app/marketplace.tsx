@@ -18,6 +18,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { PageHeader } from '../src/components/PageHeader';
+import { PopupHeader } from '../src/components/PopupHeader';
 import { MediaViewer, MediaViewerItem } from '../src/components/MediaViewer';
 import { Button, Input } from '../src/components/ui';
 import { colors, spacing, borderRadius, shadows } from '../src/theme';
@@ -483,7 +484,7 @@ export default function MarketplaceScreen() {
           <Pressable style={styles.backdrop} onPress={() => setCreateOpen(false)} />
           <View style={[styles.sheet, { paddingBottom: insets.bottom + spacing.lg }]}>
             <View style={styles.sheetHandle} />
-            <Text style={styles.sheetTitle}>Create listing</Text>
+            <PopupHeader title="Create listing" onClose={() => setCreateOpen(false)} />
             <Text style={styles.sheetSubtitle}>Buyers in your building can contact you here.</Text>
             <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.form}>
               <Input label="Title" value={title} onChangeText={setTitle} placeholder="Wooden dining table" />
@@ -572,7 +573,7 @@ function DeleteModal({
       <View style={styles.confirmWrap}>
         <Pressable style={styles.backdrop} onPress={onClose} />
         <View style={styles.confirmCard}>
-          <Text style={styles.confirmTitle}>Delete listing?</Text>
+          <PopupHeader title="Delete listing?" onClose={onClose} />
           <Text style={styles.confirmBody}>{listing ? `${listing.title} will be removed.` : ''}</Text>
           <View style={styles.confirmActions}>
             <Button title="Cancel" variant="outline" onPress={onClose} />

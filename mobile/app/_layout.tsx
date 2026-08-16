@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { Stack, useRouter, useSegments } from 'expo-router';
-import { ActivityIndicator, View, StyleSheet } from 'react-native';
+import { ActivityIndicator, Platform, StatusBar as NativeStatusBar, View, StyleSheet } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useAuthStore } from '../src/stores/auth.store';
@@ -60,9 +60,20 @@ function AuthGate({ children }: { children: React.ReactNode }) {
 }
 
 export default function RootLayout() {
+  useEffect(() => {
+    NativeStatusBar.setBarStyle('dark-content', true);
+    if (Platform.OS !== 'android') return;
+    try {
+      NativeStatusBar.setBackgroundColor(colors.surface, true);
+      NativeStatusBar.setTranslucent(true);
+    } catch {
+      // Android 15+ edge-to-edge ignores these; the light window background is enough.
+    }
+  }, []);
+
   return (
-    <SafeAreaProvider>
-      <StatusBar style="dark" />
+    <SafeAreaProvider style={styles.shell}>
+      <StatusBar style="dark" backgroundColor={colors.surface} translucent />
       <AuthGate>
         <Stack
           screenOptions={{
@@ -91,6 +102,10 @@ export default function RootLayout() {
 }
 
 const styles = StyleSheet.create({
+  shell: {
+    flex: 1,
+    backgroundColor: colors.surface,
+  },
   boot: {
     flex: 1,
     alignItems: 'center',

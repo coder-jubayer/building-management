@@ -13,13 +13,49 @@ function getProjectId(): string | null {
   return projectId;
 }
 
-async function getNotifications() {
-  return import('expo-notifications');
+export async function initNotifications(): Promise<void> {
+  // Expo Go throws if expo-notifications is loaded. A development build can register later.
+  if (isExpoGo()) return;
 }
 
-export async function initNotifications(): Promise<void> {
+export async function showLocalGuestAlert(_title: string, _body: string): Promise<void> {
+  if (isExpoGo()) return;
   try {
-    const Notifications = await getNotifications();
+    const Notifications = await import('expo-notifications');
+    const existing = await Notifications.getPermissionsAsync();
+    let status = existing.status;
+    if (status !== 'granted') {
+      const requested = await Notifications.requestPermissionsAsync();
+      status = requested.status;
+    }
+    if (status !== 'granted') return;
+
+    await Notifications.scheduleNotificationAsync({
+      content: {
+        title: _title,
+        body: _body,
+        sound: true,
+        channelId: 'guests',
+        data: { type: 'guest' },
+      },
+      trigger: null,
+    });
+  } catch (error) {
+    console.warn('Local guest alert skipped:', error);
+  }
+}
+
+export async function registerPushToken(): Promise<void> {
+  if (isExpoGo()) return;
+
+  try {
+    const [{ default: Device }, Notifications] = await Promise.all([
+      import('expo-device'),
+      import('expo-notifications'),
+    ]);
+
+    if (!Device.isDevice) return;
+
     Notifications.setNotificationHandler({
       handleNotification: async () => ({
         shouldShowAlert: true,
@@ -44,49 +80,6 @@ export async function initNotifications(): Promise<void> {
         lightColor: '#E11D48',
       });
     }
-  } catch (error) {
-    console.warn('Notification setup skipped:', error);
-  }
-}
-
-export async function showLocalGuestAlert(title: string, body: string): Promise<void> {
-  try {
-    const Notifications = await getNotifications();
-    const existing = await Notifications.getPermissionsAsync();
-    let status = existing.status;
-    if (status !== 'granted') {
-      const requested = await Notifications.requestPermissionsAsync();
-      status = requested.status;
-    }
-    if (status !== 'granted') return;
-
-    await Notifications.scheduleNotificationAsync({
-      content: {
-        title,
-        body,
-        sound: true,
-        channelId: 'guests',
-        data: { type: 'guest' },
-      },
-      trigger: null,
-    });
-  } catch (error) {
-    console.warn('Local guest alert skipped:', error);
-  }
-}
-
-export async function registerPushToken(): Promise<void> {
-  if (isExpoGo()) return;
-
-  try {
-    const [{ default: Device }, Notifications] = await Promise.all([
-      import('expo-device'),
-      getNotifications(),
-    ]);
-
-    if (!Device.isDevice) return;
-
-    await initNotifications();
 
     const existing = await Notifications.getPermissionsAsync();
     let status = existing.status;
@@ -109,6 +102,7 @@ export async function registerPushToken(): Promise<void> {
 }
 
 export async function unregisterPushToken(): Promise<void> {
+  if (isExpoGo()) return;
   try {
     await apiClient.delete('/auth/push-token');
   } catch {
@@ -119,8 +113,10 @@ export async function unregisterPushToken(): Promise<void> {
 export async function listenForNoticeTap(
   onTap: (data?: Record<string, string>) => void,
 ): Promise<() => void> {
+  if (isExpoGo()) return () => undefined;
+
   try {
-    const Notifications = await getNotifications();
+    const Notifications = await import('expo-notifications');
     const sub = Notifications.addNotificationResponseReceivedListener((response) => {
       const data = response.notification.request.content.data as Record<string, string> | undefined;
       onTap(data);

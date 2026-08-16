@@ -14,6 +14,7 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { PageHeader } from '../src/components/PageHeader';
+import { PopupHeader } from '../src/components/PopupHeader';
 import { Card, Input, Button } from '../src/components/ui';
 import { StatusBadge } from '../src/components/StatusBadge';
 import { colors, borderRadius, spacing, typography, shadows } from '../src/theme';
@@ -279,7 +280,7 @@ export default function UsersScreen() {
           <Pressable style={styles.backdrop} onPress={() => setCreateOpen(false)} />
           <View style={[styles.sheet, { paddingBottom: insets.bottom + spacing.lg }]}>
             <View style={styles.sheetHandle} />
-            <Text style={styles.sheetTitle}>Add user</Text>
+            <PopupHeader title="Add user" onClose={() => setCreateOpen(false)} />
             <Text style={styles.sheetSubtitle}>
               {appAdmin
                 ? 'App admins can create building admins and staff for any community.'
@@ -370,13 +371,16 @@ export default function UsersScreen() {
         <View style={styles.confirmWrap}>
           <Pressable style={styles.backdrop} onPress={() => setConfirmAction(null)} />
           <View style={styles.confirmCard}>
-            <Text style={styles.confirmTitle}>
-              {confirmAction?.type === 'delete'
-                ? 'Delete user?'
-                : confirmAction?.type === 'activate'
-                  ? 'Activate user?'
-                  : 'Deactivate user?'}
-            </Text>
+            <PopupHeader
+              title={
+                confirmAction?.type === 'delete'
+                  ? 'Delete user?'
+                  : confirmAction?.type === 'activate'
+                    ? 'Activate user?'
+                    : 'Deactivate user?'
+              }
+              onClose={() => setConfirmAction(null)}
+            />
             <Text style={styles.confirmBody}>
               {confirmAction?.type === 'delete'
                 ? `${confirmAction.user.name} will be permanently removed.`

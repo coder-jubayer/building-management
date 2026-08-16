@@ -47,8 +47,25 @@ function resolveDevApiUrl(): string {
   return `http://localhost:${API_PORT}/api/v1`;
 }
 
+function resolveApiUrl(): string {
+  const extraUrl = (Constants as { expoConfig?: { extra?: { apiUrl?: string } } }).expoConfig
+    ?.extra?.apiUrl;
+  const fromEnv = process.env.EXPO_PUBLIC_API_URL;
+
+  if (!__DEV__) {
+    if (fromEnv && !fromEnv.includes('localhost') && !fromEnv.includes('127.0.0.1')) {
+      return fromEnv;
+    }
+    if (extraUrl && !extraUrl.includes('localhost') && !extraUrl.includes('127.0.0.1')) {
+      return extraUrl;
+    }
+  }
+
+  return resolveDevApiUrl();
+}
+
 export const config = {
-  apiUrl: resolveDevApiUrl(),
+  apiUrl: resolveApiUrl(),
   appName: 'Building Management',
   appVersion: Constants.expoConfig?.version ?? '1.0.0',
 } as const;

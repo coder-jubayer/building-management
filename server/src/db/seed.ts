@@ -1,3 +1,4 @@
+import { env } from '../config/env';
 import { User } from '../models/User';
 import { Building } from '../models/Building';
 import { Notice } from '../models/Notice';
@@ -12,9 +13,47 @@ import { ComplaintComment } from '../models/ComplaintComment';
 const ADMIN_EMAIL = 'admin@bm.com';
 const ADMIN_PASSWORD = 'admin123';
 
+async function seedProductionAdmin(): Promise<void> {
+  const email = process.env.ADMIN_EMAIL?.trim().toLowerCase();
+  const password = process.env.ADMIN_PASSWORD;
+
+  if (!email || !password) {
+    const existingAdmin = await User.findOne({ role: 'app_admin' });
+    if (!existingAdmin) {
+      console.warn('No app_admin user found. Set ADMIN_EMAIL and ADMIN_PASSWORD on first boot.');
+    }
+    return;
+  }
+
+  const existing = await User.findOne({ email });
+  if (existing) {
+    if (existing.role !== 'app_admin') {
+      await User.collection.updateOne(
+        { _id: existing._id },
+        { $set: { role: 'app_admin' }, $unset: { buildingId: 1 } },
+      );
+      console.log(`Existing user promoted to app_admin (${email})`);
+    }
+    return;
+  }
+
+  await User.create({
+    name: 'App Admin',
+    email,
+    password,
+    role: 'app_admin',
+  });
+  console.log(`Production app admin created (${email})`);
+}
+
 export async function seedAdminUser(): Promise<void> {
   await User.collection.updateMany({ role: 'admin' }, { $set: { role: 'app_admin' } });
   await User.collection.updateMany({ role: 'treasurer' }, { $set: { role: 'committee' } });
+
+  if (env.isProduction && process.env.SEED_DEMO !== 'true') {
+    await seedProductionAdmin();
+    return;
+  }
 
   let defaultBuilding = await Building.findOne({ name: 'Default Community' });
   if (!defaultBuilding) {

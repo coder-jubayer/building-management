@@ -66,7 +66,7 @@ export function canManageAmenityBookings(role?: UserRole | null): boolean {
 }
 
 export function canCreateGuestVisits(role?: UserRole | null): boolean {
-  return role === 'guard' || isBuildingAdmin(role) || isAppAdmin(role);
+  return role === 'guard';
 }
 
 export function canDecideGuestVisits(role?: UserRole | null): boolean {
@@ -305,6 +305,7 @@ export interface InboxThread {
   lastMessageAt?: string;
   updatedAt?: string;
   unread: number;
+  pinned?: boolean;
 }
 
 export interface InboxGroupMember {
@@ -396,6 +397,7 @@ export interface ElectionSummary {
   totalVotes?: number;
   canManage: boolean;
   canVote: boolean;
+  canChangeVote?: boolean;
   hasVoted: boolean;
   myCandidateId?: string;
   resultsVisible: boolean;

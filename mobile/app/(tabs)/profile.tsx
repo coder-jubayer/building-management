@@ -15,6 +15,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { PageHeader } from '../../src/components/PageHeader';
+import { PopupHeader } from '../../src/components/PopupHeader';
 import { Button, Input } from '../../src/components/ui';
 import { useAuthStore } from '../../src/stores/auth.store';
 import { updateMyProfile } from '../../src/services/auth.service';
@@ -218,7 +219,7 @@ export default function ProfileScreen() {
           <Pressable style={styles.modalDismiss} onPress={() => setEditOpen(false)} />
           <View style={[styles.editSheet, { paddingBottom: Math.max(insets.bottom, 20) }]}>
             <View style={styles.handle} />
-            <Text style={styles.modalTitle}>Edit profile</Text>
+            <PopupHeader title="Edit profile" onClose={() => setEditOpen(false)} />
             <Text style={styles.modalSub}>Update your name, photo, phone, and unit details.</Text>
             <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.editForm}>
               <Pressable style={styles.editAvatarWrap} onPress={() => void pickAvatar()}>
@@ -275,7 +276,7 @@ export default function ProfileScreen() {
               <Ionicons name="log-out" size={28} color={colors.error} />
             </View>
 
-            <Text style={styles.modalTitle}>Log out?</Text>
+            <PopupHeader title="Log out?" onClose={() => setLogoutOpen(false)} />
             <Text style={styles.modalSub}>
               You’ll need to sign in again to access your building account.
             </Text>

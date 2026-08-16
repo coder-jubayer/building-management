@@ -16,6 +16,7 @@ import { useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { PageHeader } from '../../src/components/PageHeader';
+import { PopupHeader } from '../../src/components/PopupHeader';
 import { Button, Input } from '../../src/components/ui';
 import { colors, spacing, borderRadius, shadows } from '../../src/theme';
 import { useAuthStore } from '../../src/stores/auth.store';
@@ -362,7 +363,7 @@ export default function GuestsScreen() {
           >
             <View style={[styles.sheet, { paddingBottom: insets.bottom + spacing.lg }]}>
               <View style={styles.sheetHandle} />
-              <Text style={styles.sheetTitle}>Add visitor</Text>
+              <PopupHeader title="Add visitor" onClose={() => setCreateOpen(false)} />
               <Text style={styles.sheetSubtitle}>Send an approval request to the resident.</Text>
               <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.form}>
               <Text style={styles.fieldLabel}>Host resident</Text>
