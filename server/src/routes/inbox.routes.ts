@@ -6,7 +6,7 @@ import { User } from '../models/User';
 import { Building } from '../models/Building';
 import { InboxThread, IInboxThreadDocument } from '../models/InboxThread';
 import { InboxMessage } from '../models/InboxMessage';
-import { InboxGroup, IInboxGroupDocument } from '../models/InboxGroup';
+import { InboxGroup, IInboxGroupDocument, IInboxGroupMember } from '../models/InboxGroup';
 import { InboxGroupMessage } from '../models/InboxGroupMessage';
 import { AppError } from '../middleware/errorHandler';
 import { AuthRequest, requireAuth } from '../middleware/auth';
@@ -433,25 +433,23 @@ async function loadGroupForActor(groupId: string, actorId: string, actorRole: st
   return group;
 }
 
-async function memberSnapshots(ids: string[]) {
+async function memberSnapshots(ids: string[]): Promise<IInboxGroupMember[]> {
   const unique = [...new Set(ids.filter(Boolean))];
   const users = await User.find({ _id: { $in: unique }, isActive: true });
   const byId = new Map(users.map((user) => [user._id.toString(), user]));
-  return unique
-    .map((id) => {
-      const user = byId.get(id);
-      if (!user) return null;
-      return {
+  return unique.flatMap((id) => {
+    const user = byId.get(id);
+    if (!user) return [];
+    return [
+      {
         id: user._id.toString(),
         name: user.name,
         role: user.role,
         phone: user.phone,
         unitNumber: user.unitNumber,
-      };
-    })
-    .filter(
-      (item): item is { id: string; name: string; role: string; phone?: string; unitNumber?: string } => Boolean(item),
-    );
+      },
+    ];
+  });
 }
 
 router.get('/groups', async (req: AuthRequest, res: Response, next: NextFunction) => {
@@ -474,7 +472,7 @@ router.post('/groups', async (req: AuthRequest, res: Response, next: NextFunctio
     const actor = req.user!;
     const name = String(req.body.name ?? '').trim();
     const requestedIds = Array.isArray(req.body.memberIds)
-      ? req.body.memberIds.map((id: unknown) => String(id).trim()).filter(Boolean)
+      ? req.body.memberIds.map((id: unknown) => String(id).trim()).filter((id: string) => id.length > 0)
       : [];
     if (name.length < 2) throw new AppError(400, 'Enter a group name');
 
@@ -583,8 +581,8 @@ router.post('/groups/:groupId/members', async (req: AuthRequest, res: Response, 
   try {
     const actor = req.user!;
     const group = await loadGroupForActor(String(req.params.groupId), actor.userId, actor.role);
-    const requestedIds = Array.isArray(req.body.memberIds)
-      ? req.body.memberIds.map((id: unknown) => String(id).trim()).filter(Boolean)
+    const requestedIds: string[] = Array.isArray(req.body.memberIds)
+      ? req.body.memberIds.map((id: unknown) => String(id).trim()).filter((id: string) => id.length > 0)
       : [];
     if (!requestedIds.length) throw new AppError(400, 'Select people to add');
 

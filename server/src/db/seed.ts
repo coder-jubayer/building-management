@@ -333,7 +333,7 @@ async function seedSampleComplaints(buildingId: string): Promise<void> {
   const creator = resident || committee;
   if (!creator) return;
 
-  const [leaking, ac, lobby] = await Complaint.insertMany([
+  const [leaking, , lobby] = await Complaint.insertMany([
     {
       buildingId,
       title: 'Leaking pipe in bathroom',

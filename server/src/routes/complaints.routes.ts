@@ -21,7 +21,6 @@ import {
   complaintsUploadDir,
   ensureUploadDirs,
   publicFileUrl,
-  removeStoredFiles,
   storedComplaintPath,
 } from '../utils/uploads';
 
@@ -133,9 +132,10 @@ async function reportersByIds(ids: string[]) {
 
 async function loadComplaintForActor(
   actor: { userId: string; role: string; buildingId?: string },
-  complaintId: string,
+  complaintId: string | string[],
 ) {
-  const complaint = await Complaint.findById(complaintId);
+  const id = Array.isArray(complaintId) ? complaintId[0] : complaintId;
+  const complaint = await Complaint.findById(id);
   if (!complaint) throw new AppError(404, 'Complaint not found');
   if (!isAppAdmin(actor.role) && actor.buildingId && complaint.buildingId !== actor.buildingId) {
     throw new AppError(403, 'Complaint is not in your building');

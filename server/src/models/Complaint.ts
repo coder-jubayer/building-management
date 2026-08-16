@@ -77,7 +77,7 @@ complaintSchema.methods.toSafeJSON = function toSafeJSON(
     status: this.status,
     media:
       mediaUrls ??
-      this.media.map((item) => ({
+      this.media.map((item: IComplaintMedia) => ({
         url: item.path,
         kind: item.kind,
       })),

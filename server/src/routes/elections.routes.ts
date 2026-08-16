@@ -78,9 +78,10 @@ function parseDate(value: unknown, label: string): Date {
 
 async function loadElectionForActor(
   actor: { userId: string; role: string; buildingId?: string },
-  electionId: string,
+  electionId: string | string[],
 ) {
-  const election = await Election.findById(electionId);
+  const id = Array.isArray(electionId) ? electionId[0] : electionId;
+  const election = await Election.findById(id);
   if (!election) throw new AppError(404, 'Election not found');
   if (!isAppAdmin(actor.role) && actor.buildingId && election.buildingId !== actor.buildingId) {
     throw new AppError(403, 'Election is not in your building');
