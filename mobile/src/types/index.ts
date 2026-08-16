@@ -57,6 +57,22 @@ export function canManageComplaints(role?: UserRole | null): boolean {
   return role === 'committee' || isBuildingAdmin(role) || isAppAdmin(role);
 }
 
+export function canBookAmenities(role?: UserRole | null): boolean {
+  return role === 'resident' || role === 'committee' || isBuildingAdmin(role) || isAppAdmin(role);
+}
+
+export function canManageAmenityBookings(role?: UserRole | null): boolean {
+  return isBuildingAdmin(role) || isAppAdmin(role);
+}
+
+export function canCreateGuestVisits(role?: UserRole | null): boolean {
+  return role === 'guard' || isBuildingAdmin(role) || isAppAdmin(role);
+}
+
+export function canDecideGuestVisits(role?: UserRole | null): boolean {
+  return role === 'resident';
+}
+
 export function isResident(role?: UserRole | null): boolean {
   return role === 'resident';
 }
@@ -461,4 +477,139 @@ export interface ComplaintsListResponse {
 export interface ComplaintDetailResponse {
   complaint: ComplaintTicket;
   comments: ComplaintComment[];
+}
+
+export interface AmenitySummary {
+  id: string;
+  name: string;
+  icon: string;
+  color: string;
+  capacity: number;
+  slotMinutes: number;
+  openHour: number;
+  closeHour: number;
+  hoursLabel: string;
+  totalSlots: number;
+  bookedSlots: number;
+  availableSlots: number;
+}
+
+export interface AmenityDateOption {
+  value: string;
+  label: string;
+  day: string;
+  fullLabel: string;
+}
+
+export interface AmenityBooking {
+  id: string;
+  buildingId: string;
+  amenityId: string;
+  amenityName: string;
+  amenityIcon: string;
+  amenityColor: string;
+  date: string;
+  dateLabel?: string;
+  startTime: string;
+  endTime: string;
+  status: 'booked' | 'cancelled';
+  userId: string;
+  userName: string;
+  userPhone?: string;
+  unitNumber?: string;
+  mine: boolean;
+  canCancel?: boolean;
+  createdAt: string;
+}
+
+export interface AmenityOccupant {
+  id: string;
+  bookingId?: string;
+  name: string;
+  unitNumber?: string;
+  phone?: string;
+  mine: boolean;
+  canCancel?: boolean;
+}
+
+export interface AmenitySlot {
+  startTime: string;
+  endTime: string;
+  capacity: number;
+  bookedCount: number;
+  remaining: number;
+  past: boolean;
+  available: boolean;
+  mine: boolean;
+  myBookingId?: string;
+  bookedBy: AmenityOccupant[];
+}
+
+export interface AmenitySlotsResponse {
+  date: string;
+  dateLabel: string;
+  amenity: {
+    id: string;
+    name: string;
+    icon: string;
+    color: string;
+    capacity: number;
+    slotMinutes: number;
+    hoursLabel: string;
+  };
+  canBook: boolean;
+  canManage?: boolean;
+  slotMinuteOptions?: number[];
+  dayBookings?: AmenityBooking[];
+  slots: AmenitySlot[];
+}
+
+export interface AmenitiesListResponse {
+  date: string;
+  dates: AmenityDateOption[];
+  amenities: AmenitySummary[];
+  myBookings: AmenityBooking[];
+  dayBookings?: AmenityBooking[];
+  nextBooking?: AmenityBooking | null;
+  canBook: boolean;
+  canManage?: boolean;
+  slotMinuteOptions?: number[];
+  buildings?: Building[];
+}
+
+export type GuestStatus = 'pending' | 'approved' | 'denied';
+
+export interface GuestHost {
+  id: string;
+  name: string;
+  unitNumber?: string;
+  phone?: string;
+}
+
+export interface GuestVisit {
+  id: string;
+  buildingId: string;
+  residentId: string;
+  residentName: string;
+  unitNumber?: string;
+  visitorName: string;
+  visitorPhone: string;
+  purpose: string;
+  status: GuestStatus;
+  createdBy: string;
+  createdByName: string;
+  createdAt: string;
+  decidedAt?: string;
+  canDecide?: boolean;
+}
+
+export interface GuestsListResponse {
+  visits: GuestVisit[];
+  pendingCount: number;
+  canCreate: boolean;
+  canDecide: boolean;
+  purposes: string[];
+  residents?: GuestHost[];
+  buildings?: Building[];
+  buildingId?: string;
 }

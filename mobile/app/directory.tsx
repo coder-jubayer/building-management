@@ -417,7 +417,7 @@ export default function DirectoryScreen() {
               <Input label="Note (optional)" value={note} onChangeText={setNote} placeholder="24/7 control room" />
               {formError ? <Text style={styles.error}>{formError}</Text> : null}
               <Button title="Save contact" loading={creating} onPress={() => void handleCreate()} />
-              <Button title="Cancel" variant="ghost" onPress={() => setCreateOpen(false)} />
+              <Button title="Cancel" variant="outline" onPress={() => setCreateOpen(false)} />
             </ScrollView>
               </>
             )}
@@ -434,7 +434,7 @@ export default function DirectoryScreen() {
               {deleteTarget ? `${deleteTarget.name} (${deleteTarget.phone}) will be removed.` : ''}
             </Text>
             <View style={styles.confirmActions}>
-              <Button title="Cancel" variant="ghost" onPress={() => setDeleteTarget(null)} />
+              <Button title="Cancel" variant="outline" onPress={() => setDeleteTarget(null)} />
               <Button title="Delete" variant="danger" loading={deleting} onPress={() => void handleDelete()} />
             </View>
           </View>

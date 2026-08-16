@@ -9,6 +9,8 @@ import marketplaceRoutes from './marketplace.routes';
 import electionsRoutes from './elections.routes';
 import complaintsRoutes from './complaints.routes';
 import inboxRoutes from './inbox.routes';
+import amenitiesRoutes from './amenities.routes';
+import guestsRoutes from './guests.routes';
 
 const router = Router();
 
@@ -22,6 +24,8 @@ router.use('/marketplace', marketplaceRoutes);
 router.use('/elections', electionsRoutes);
 router.use('/complaints', complaintsRoutes);
 router.use('/inbox', inboxRoutes);
+router.use('/amenities', amenitiesRoutes);
+router.use('/guests', guestsRoutes);
 
 router.get('/', (_req, res) => {
   res.json({

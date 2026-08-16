@@ -18,6 +18,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { PageHeader } from '../src/components/PageHeader';
+import { MediaViewer, MediaViewerItem } from '../src/components/MediaViewer';
 import { Button, Input } from '../src/components/ui';
 import { colors, spacing, borderRadius, shadows } from '../src/theme';
 import { useAuthStore } from '../src/stores/auth.store';
@@ -76,6 +77,7 @@ export default function ComplaintsScreen() {
   const [comments, setComments] = useState<ComplaintComment[]>([]);
   const [draft, setDraft] = useState('');
   const [commentMedia, setCommentMedia] = useState<LocalMedia[]>([]);
+  const [viewer, setViewer] = useState<MediaViewerItem | null>(null);
   const [sending, setSending] = useState(false);
   const [updatingStatus, setUpdatingStatus] = useState(false);
 
@@ -322,7 +324,10 @@ export default function ComplaintsScreen() {
             {selected.media.length ? (
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.mediaRow}>
                 {selected.media.map((item, index) => (
-                  <Pressable key={`${item.url}-${index}`} onPress={() => void Linking.openURL(item.url)}>
+                  <Pressable
+                    key={`${item.url}-${index}`}
+                    onPress={() => setViewer({ url: item.url, kind: item.kind === 'video' ? 'video' : 'image' })}
+                  >
                     {item.kind === 'image' ? (
                       <Image source={{ uri: item.url }} style={styles.mediaThumb} contentFit="cover" />
                     ) : (
@@ -441,7 +446,10 @@ export default function ComplaintsScreen() {
               {comment.media?.length ? (
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.mediaRow}>
                   {comment.media.map((item, index) => (
-                    <Pressable key={`${item.url}-${index}`} onPress={() => void Linking.openURL(item.url)}>
+                    <Pressable
+                      key={`${item.url}-${index}`}
+                      onPress={() => setViewer({ url: item.url, kind: item.kind === 'video' ? 'video' : 'image' })}
+                    >
                       {item.kind === 'image' ? (
                         <Image source={{ uri: item.url }} style={styles.mediaThumb} contentFit="cover" />
                       ) : (
@@ -516,6 +524,7 @@ export default function ComplaintsScreen() {
             <Text style={styles.toastText}>{toast}</Text>
           </View>
         ) : null}
+        <MediaViewer visible={!!viewer} item={viewer} onClose={() => setViewer(null)} />
       </View>
     );
   }
@@ -689,7 +698,7 @@ export default function ComplaintsScreen() {
               </ScrollView>
               {formError ? <Text style={styles.error}>{formError}</Text> : null}
               <Button title="Submit ticket" loading={creating} onPress={() => void handleCreate()} />
-              <Button title="Cancel" variant="ghost" onPress={() => setCreateOpen(false)} />
+              <Button title="Cancel" variant="outline" onPress={() => setCreateOpen(false)} />
             </ScrollView>
           </View>
         </KeyboardAvoidingView>

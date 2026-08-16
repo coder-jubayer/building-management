@@ -4,7 +4,7 @@ import { ActivityIndicator, View, StyleSheet } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useAuthStore } from '../src/stores/auth.store';
-import { listenForNoticeTap, registerPushToken } from '../src/services/push.service';
+import { listenForNoticeTap, initNotifications, registerPushToken } from '../src/services/push.service';
 import { colors } from '../src/theme';
 
 function AuthGate({ children }: { children: React.ReactNode }) {
@@ -32,10 +32,17 @@ function AuthGate({ children }: { children: React.ReactNode }) {
   }, [isAuthenticated, isHydrated, segments, router]);
 
   useEffect(() => {
+    void initNotifications();
+  }, []);
+
+  useEffect(() => {
     if (!isAuthenticated) return;
     void registerPushToken();
     let unsubscribe: (() => void) | undefined;
-    void listenForNoticeTap(() => router.push('/notices')).then((stop) => {
+    void listenForNoticeTap((data) => {
+      if (data?.type === 'guest') router.push('/(tabs)/guests');
+      else router.push('/notices');
+    }).then((stop) => {
       unsubscribe = stop;
     });
     return () => unsubscribe?.();

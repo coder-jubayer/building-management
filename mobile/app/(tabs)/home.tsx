@@ -11,23 +11,25 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuthStore } from '../../src/stores/auth.store';
-import { mockGuests } from '../../src/data/mockData';
 import { fetchNotices } from '../../src/services/notices.service';
 import { fetchExpenses } from '../../src/services/expenses.service';
-import { formatNoticeDate } from '../../src/utils/date';
+import { fetchAmenities } from '../../src/services/amenities.service';
+import { fetchGuests } from '../../src/services/guests.service';
+import { formatNoticeDate, formatSlotTime } from '../../src/utils/date';
 import { formatMoney } from '../../src/utils/money';
-import { Notice, isResident } from '../../src/types';
+import { AmenityBooking, GuestVisit, Notice, isResident } from '../../src/types';
 import { colors, spacing, borderRadius, typography, shadows } from '../../src/theme';
 
 export default function HomeScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const user = useAuthStore((s) => s.user);
-  const pendingGuests = mockGuests.filter((g) => g.status === 'pending');
   const [recentNotices, setRecentNotices] = useState<Notice[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [monthTotal, setMonthTotal] = useState<number | null>(null);
   const [monthLabel, setMonthLabel] = useState('');
+  const [nextBooking, setNextBooking] = useState<AmenityBooking | null>(null);
+  const [pendingGuests, setPendingGuests] = useState<GuestVisit[]>([]);
   const resident = isResident(user?.role);
 
   useFocusEffect(
@@ -51,6 +53,22 @@ export default function HomeScreen() {
           setMonthTotal(null);
           setMonthLabel('');
         });
+      void fetchAmenities()
+        .then((data) => {
+          setNextBooking(data.nextBooking ?? null);
+        })
+        .catch(() => {
+          setNextBooking(null);
+        });
+      if (resident) {
+        void fetchGuests()
+          .then((data) => {
+            setPendingGuests(data.visits.filter((item) => item.status === 'pending'));
+          })
+          .catch(() => setPendingGuests([]));
+      } else {
+        setPendingGuests([]);
+      }
     }, [resident]),
   );
   const firstName = user?.name?.split(' ')[0] ?? 'Resident';
@@ -99,9 +117,13 @@ export default function HomeScreen() {
           onPress={() => router.push('/amenities')}
         >
           <Text style={styles.cardLabel}>AMENITY SLOT</Text>
-          <Text style={styles.cardValue}>14:00</Text>
+          <Text style={styles.cardValue} numberOfLines={1}>
+            {nextBooking ? formatSlotTime(nextBooking.startTime) : 'Open'}
+          </Text>
           <View style={[styles.cardBadge, { backgroundColor: 'rgba(255,255,255,0.25)' }]}>
-            <Text style={styles.cardBadgeText}>Swimming Pool</Text>
+            <Text style={styles.cardBadgeText} numberOfLines={1}>
+              {nextBooking ? nextBooking.amenityName : 'Book a slot'}
+            </Text>
           </View>
         </Pressable>
       </View>
@@ -115,7 +137,7 @@ export default function HomeScreen() {
           <View style={{ flex: 1 }}>
             <Text style={styles.guestTitle}>GUEST AT MAIN GATE</Text>
             <Text style={styles.guestDesc} numberOfLines={1}>
-              {pendingGuests[0].name} ({pendingGuests[0].purpose})
+              {pendingGuests[0].visitorName} ({pendingGuests[0].purpose})
             </Text>
           </View>
           <Pressable style={styles.approveBtn} onPress={() => router.push('/(tabs)/guests')}>

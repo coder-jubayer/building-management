@@ -440,7 +440,7 @@ export default function ExpensesScreen() {
                   />
                   {formError ? <Text style={styles.error}>{formError}</Text> : null}
                   <Button title="Save expense" loading={creating} onPress={() => void handleCreate()} />
-                  <Button title="Cancel" variant="ghost" onPress={() => setCreateOpen(false)} />
+                  <Button title="Cancel" variant="outline" onPress={() => setCreateOpen(false)} />
                 </ScrollView>
               </>
             )}
@@ -459,7 +459,7 @@ export default function ExpensesScreen() {
                 : ''}
             </Text>
             <View style={styles.confirmActions}>
-              <Button title="Cancel" variant="ghost" onPress={() => setDeleteTarget(null)} />
+              <Button title="Cancel" variant="outline" onPress={() => setDeleteTarget(null)} />
               <Button title="Delete" variant="danger" loading={deleting} onPress={() => void handleDelete()} />
             </View>
           </View>

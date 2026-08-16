@@ -13,17 +13,13 @@ function getProjectId(): string | null {
   return projectId;
 }
 
-export async function registerPushToken(): Promise<void> {
-  if (isExpoGo()) return;
+async function getNotifications() {
+  return import('expo-notifications');
+}
 
+export async function initNotifications(): Promise<void> {
   try {
-    const [{ default: Device }, Notifications] = await Promise.all([
-      import('expo-device'),
-      import('expo-notifications'),
-    ]);
-
-    if (!Device.isDevice) return;
-
+    const Notifications = await getNotifications();
     Notifications.setNotificationHandler({
       handleNotification: async () => ({
         shouldShowAlert: true,
@@ -41,7 +37,56 @@ export async function registerPushToken(): Promise<void> {
         vibrationPattern: [0, 250, 250, 250],
         lightColor: '#4F46E5',
       });
+      await Notifications.setNotificationChannelAsync('guests', {
+        name: 'Guest Approvals',
+        importance: Notifications.AndroidImportance.MAX,
+        vibrationPattern: [0, 250, 250, 250],
+        lightColor: '#E11D48',
+      });
     }
+  } catch (error) {
+    console.warn('Notification setup skipped:', error);
+  }
+}
+
+export async function showLocalGuestAlert(title: string, body: string): Promise<void> {
+  try {
+    const Notifications = await getNotifications();
+    const existing = await Notifications.getPermissionsAsync();
+    let status = existing.status;
+    if (status !== 'granted') {
+      const requested = await Notifications.requestPermissionsAsync();
+      status = requested.status;
+    }
+    if (status !== 'granted') return;
+
+    await Notifications.scheduleNotificationAsync({
+      content: {
+        title,
+        body,
+        sound: true,
+        channelId: 'guests',
+        data: { type: 'guest' },
+      },
+      trigger: null,
+    });
+  } catch (error) {
+    console.warn('Local guest alert skipped:', error);
+  }
+}
+
+export async function registerPushToken(): Promise<void> {
+  if (isExpoGo()) return;
+
+  try {
+    const [{ default: Device }, Notifications] = await Promise.all([
+      import('expo-device'),
+      getNotifications(),
+    ]);
+
+    if (!Device.isDevice) return;
+
+    await initNotifications();
 
     const existing = await Notifications.getPermissionsAsync();
     let status = existing.status;
@@ -71,12 +116,15 @@ export async function unregisterPushToken(): Promise<void> {
   }
 }
 
-export async function listenForNoticeTap(onTap: () => void): Promise<() => void> {
-  if (isExpoGo()) return () => undefined;
-
+export async function listenForNoticeTap(
+  onTap: (data?: Record<string, string>) => void,
+): Promise<() => void> {
   try {
-    const Notifications = await import('expo-notifications');
-    const sub = Notifications.addNotificationResponseReceivedListener(onTap);
+    const Notifications = await getNotifications();
+    const sub = Notifications.addNotificationResponseReceivedListener((response) => {
+      const data = response.notification.request.content.data as Record<string, string> | undefined;
+      onTap(data);
+    });
     return () => sub.remove();
   } catch {
     return () => undefined;

@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -10,13 +10,15 @@ import {
   KeyboardAvoidingView,
   Platform,
   Linking,
+  BackHandler,
 } from 'react-native';
-import { useFocusEffect, useRouter } from 'expo-router';
+import { useFocusEffect, useNavigation, useRouter } from 'expo-router';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { PageHeader } from '../src/components/PageHeader';
+import { MediaViewer, MediaViewerItem } from '../src/components/MediaViewer';
 import { Button, Input } from '../src/components/ui';
 import { colors, spacing, borderRadius, shadows } from '../src/theme';
 import { useAuthStore } from '../src/stores/auth.store';
@@ -38,6 +40,7 @@ type LocalImage = { uri: string; name?: string; type?: string };
 
 export default function MarketplaceScreen() {
   const router = useRouter();
+  const navigation = useNavigation();
   const insets = useSafeAreaInsets();
   const user = useAuthStore((s) => s.user);
   const creator = canCreateListing(user?.role);
@@ -55,6 +58,7 @@ export default function MarketplaceScreen() {
 
   const [selected, setSelected] = useState<MarketplaceListing | null>(null);
   const [imageIndex, setImageIndex] = useState(0);
+  const [viewer, setViewer] = useState<MediaViewerItem | null>(null);
 
   const [createOpen, setCreateOpen] = useState(false);
   const [creating, setCreating] = useState(false);
@@ -93,6 +97,39 @@ export default function MarketplaceScreen() {
       void loadListings();
     }, [loadListings]),
   );
+
+  const closeListing = useCallback(() => {
+    setViewer(null);
+    setDeleteTarget(null);
+    setSelected(null);
+  }, []);
+
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('beforeRemove', (event) => {
+      if (viewer) {
+        event.preventDefault();
+        setViewer(null);
+        return;
+      }
+      if (!selected) return;
+      event.preventDefault();
+      closeListing();
+    });
+    return unsubscribe;
+  }, [navigation, selected, viewer, closeListing]);
+
+  useEffect(() => {
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      if (viewer) {
+        setViewer(null);
+        return true;
+      }
+      if (!selected) return false;
+      closeListing();
+      return true;
+    });
+    return () => sub.remove();
+  }, [selected, viewer, closeListing]);
 
   const showToast = (message: string) => {
     setToast(message);
@@ -223,11 +260,13 @@ export default function MarketplaceScreen() {
     const photo = photos[imageIndex] ?? photos[0];
     return (
       <View style={styles.root}>
-        <PageHeader title="Listing" onBack={() => setSelected(null)} />
+        <PageHeader title="Listing" onBack={closeListing} />
         <ScrollView contentContainerStyle={[styles.detail, { paddingBottom: insets.bottom + 40 }]}>
           <View style={styles.heroImage}>
             {photo ? (
-              <Image source={{ uri: photo }} style={styles.heroImg} contentFit="cover" />
+              <Pressable style={styles.heroImg} onPress={() => setViewer({ url: photo, kind: 'image' })}>
+                <Image source={{ uri: photo }} style={styles.heroImg} contentFit="cover" />
+              </Pressable>
             ) : (
               <View style={styles.heroEmpty}>
                 <Ionicons name="image-outline" size={36} color={colors.textMuted} />
@@ -307,6 +346,7 @@ export default function MarketplaceScreen() {
           onClose={() => setDeleteTarget(null)}
           onConfirm={() => void handleDelete()}
         />
+        <MediaViewer visible={!!viewer} item={viewer} onClose={() => setViewer(null)} />
       </View>
     );
   }
@@ -500,7 +540,7 @@ export default function MarketplaceScreen() {
               />
               {formError ? <Text style={styles.error}>{formError}</Text> : null}
               <Button title="Post listing" loading={creating} onPress={() => void handleCreate()} />
-              <Button title="Cancel" variant="ghost" onPress={() => setCreateOpen(false)} />
+              <Button title="Cancel" variant="outline" onPress={() => setCreateOpen(false)} />
             </ScrollView>
           </View>
         </KeyboardAvoidingView>
@@ -535,7 +575,7 @@ function DeleteModal({
           <Text style={styles.confirmTitle}>Delete listing?</Text>
           <Text style={styles.confirmBody}>{listing ? `${listing.title} will be removed.` : ''}</Text>
           <View style={styles.confirmActions}>
-            <Button title="Cancel" variant="ghost" onPress={onClose} />
+            <Button title="Cancel" variant="outline" onPress={onClose} />
             <Button title="Delete" variant="danger" loading={deleting} onPress={onConfirm} />
           </View>
         </View>

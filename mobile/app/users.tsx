@@ -360,7 +360,7 @@ export default function UsersScreen() {
 
               {formError ? <Text style={styles.error}>{formError}</Text> : null}
               <Button title="Create user" loading={creating} onPress={() => void handleCreate()} />
-              <Button title="Cancel" variant="ghost" onPress={() => setCreateOpen(false)} />
+              <Button title="Cancel" variant="outline" onPress={() => setCreateOpen(false)} />
             </ScrollView>
           </View>
         </KeyboardAvoidingView>
@@ -385,7 +385,7 @@ export default function UsersScreen() {
                   : `${confirmAction?.user.name} will not be able to sign in.`}
             </Text>
             <View style={styles.confirmActions}>
-              <Button title="Cancel" variant="ghost" onPress={() => setConfirmAction(null)} />
+              <Button title="Cancel" variant="outline" onPress={() => setConfirmAction(null)} />
               <Button
                 title={
                   confirmAction?.type === 'delete'

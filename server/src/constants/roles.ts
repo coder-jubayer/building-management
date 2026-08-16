@@ -85,6 +85,26 @@ export function canManageComplaints(role?: string | null): boolean {
   return isCommittee(role) || isBuildingAdmin(role) || isAppAdmin(role);
 }
 
+export function canBookAmenities(role?: string | null): boolean {
+  return isResident(role) || isCommittee(role) || isBuildingAdmin(role) || isAppAdmin(role);
+}
+
+export function canManageAmenityBookings(role?: string | null): boolean {
+  return isBuildingAdmin(role) || isAppAdmin(role);
+}
+
+export function canCreateGuestVisits(role?: string | null): boolean {
+  return role === 'guard' || isBuildingAdmin(role) || isAppAdmin(role);
+}
+
+export function canViewBuildingGuests(role?: string | null): boolean {
+  return canCreateGuestVisits(role);
+}
+
+export function canDecideGuestVisits(role?: string | null): boolean {
+  return isResident(role);
+}
+
 export function creatableRolesFor(role?: string | null): UserRole[] {
   if (isAppAdmin(role)) return [...APP_ADMIN_CREATABLE_ROLES];
   if (isBuildingAdmin(role)) return [...BUILDING_ADMIN_CREATABLE_ROLES];

@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -10,8 +10,9 @@ import {
   KeyboardAvoidingView,
   Platform,
   Switch,
+  BackHandler,
 } from 'react-native';
-import { useFocusEffect, useRouter } from 'expo-router';
+import { useFocusEffect, useNavigation, useRouter } from 'expo-router';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
@@ -73,6 +74,7 @@ const STATUS_STYLE: Record<ElectionStatus, { bg: string; fg: string; label: stri
 
 export default function VotingScreen() {
   const router = useRouter();
+  const navigation = useNavigation();
   const insets = useSafeAreaInsets();
   const user = useAuthStore((s) => s.user);
   const manager = canManageElections(user?.role);
@@ -149,6 +151,29 @@ export default function VotingScreen() {
       void loadElections();
     }, [loadElections]),
   );
+
+  const closeElection = useCallback(() => {
+    setSelected(null);
+    setCandidates([]);
+  }, []);
+
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('beforeRemove', (event) => {
+      if (!selected) return;
+      event.preventDefault();
+      closeElection();
+    });
+    return unsubscribe;
+  }, [navigation, selected, closeElection]);
+
+  useEffect(() => {
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      if (!selected) return false;
+      closeElection();
+      return true;
+    });
+    return () => sub.remove();
+  }, [selected, closeElection]);
 
   const resetCreateForm = () => {
     const now = new Date();
@@ -359,7 +384,7 @@ export default function VotingScreen() {
     const tone = STATUS_STYLE[selected.status];
     return (
       <View style={styles.root}>
-        <PageHeader title="Election" onBack={() => { setSelected(null); setCandidates([]); }} />
+        <PageHeader title="Election" onBack={closeElection} />
         <ScrollView
           contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 40 }]}
           refreshControl={
@@ -527,7 +552,7 @@ export default function VotingScreen() {
                   loading={editOpen ? savingEdit : creating}
                   onPress={() => void (editOpen ? handleEdit() : handleCreate())}
                 />
-                <Button title="Cancel" variant="ghost" onPress={() => { setCreateOpen(false); setEditOpen(false); }} />
+                <Button title="Cancel" variant="outline" onPress={() => { setCreateOpen(false); setEditOpen(false); }} />
               </ScrollView>
             </View>
           </KeyboardAvoidingView>
@@ -553,7 +578,7 @@ export default function VotingScreen() {
                 </Pressable>
                 {candidateError ? <Text style={styles.error}>{candidateError}</Text> : null}
                 <Button title="Add candidate" loading={savingCandidate} onPress={() => void handleAddCandidate()} />
-                <Button title="Cancel" variant="ghost" onPress={() => setCandidateOpen(false)} />
+                <Button title="Cancel" variant="outline" onPress={() => setCandidateOpen(false)} />
               </ScrollView>
             </View>
           </KeyboardAvoidingView>
@@ -568,7 +593,7 @@ export default function VotingScreen() {
                 {voteTarget ? `Vote for ${voteTarget.name}. You can only vote once.` : ''}
               </Text>
               <View style={styles.confirmActions}>
-                <Button title="Cancel" variant="ghost" onPress={() => setVoteTarget(null)} />
+                <Button title="Cancel" variant="outline" onPress={() => setVoteTarget(null)} />
                 <Button title="Vote" loading={!!votingId} onPress={() => void handleVote()} />
               </View>
             </View>
@@ -590,7 +615,7 @@ export default function VotingScreen() {
                     : ''}
               </Text>
               <View style={styles.confirmActions}>
-                <Button title="Cancel" variant="ghost" onPress={() => setDeleteTarget(null)} />
+                <Button title="Cancel" variant="outline" onPress={() => setDeleteTarget(null)} />
                 <Button title="Delete" variant="danger" loading={deleting} onPress={() => void handleDelete()} />
               </View>
             </View>

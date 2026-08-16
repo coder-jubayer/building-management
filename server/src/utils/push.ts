@@ -62,3 +62,37 @@ export async function sendNoticePush(options: {
 
   return sent;
 }
+
+export async function sendUserPush(options: {
+  userId: string;
+  title: string;
+  body: string;
+  data?: Record<string, string>;
+  channelId?: string;
+}): Promise<number> {
+  const user = await User.findById(options.userId).select('+expoPushToken');
+  const token = user?.expoPushToken;
+  if (!token || !Expo.isExpoPushToken(token)) return 0;
+
+  try {
+    const tickets = await expo.sendPushNotificationsAsync([
+      {
+        to: token,
+        sound: 'default',
+        title: options.title,
+        body: options.body.slice(0, 180),
+        channelId: options.channelId ?? 'guests',
+        data: options.data,
+      },
+    ]);
+    const ticket = tickets[0];
+    if (ticket?.status === 'ok') return 1;
+    const errorCode = ticket?.status === 'error' ? ticket.details?.error : undefined;
+    if (errorCode === 'DeviceNotRegistered') {
+      void User.updateMany({ expoPushToken: token }, { $unset: { expoPushToken: 1 } });
+    }
+  } catch (error) {
+    console.error('Expo guest push failed:', error);
+  }
+  return 0;
+}

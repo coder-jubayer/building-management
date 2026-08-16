@@ -19,6 +19,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, spacing, borderRadius, shadows } from '../src/theme';
+import { MediaViewer, MediaViewerItem } from '../src/components/MediaViewer';
 import { Button, Input } from '../src/components/ui';
 import {
   contactSeller,
@@ -129,6 +130,7 @@ export default function MessagesScreen() {
   const [messages, setMessages] = useState<Array<MarketplaceChatMessage | InboxChatMessage | InboxGroupMessage>>([]);
   const [draft, setDraft] = useState('');
   const [pendingPhoto, setPendingPhoto] = useState<{ uri: string; name?: string; type?: string } | null>(null);
+  const [viewer, setViewer] = useState<MediaViewerItem | null>(null);
   const [sending, setSending] = useState(false);
   const [renameOpen, setRenameOpen] = useState(false);
   const [renameValue, setRenameValue] = useState('');
@@ -521,7 +523,7 @@ export default function MessagesScreen() {
                 <Text style={styles.senderName}>{item.senderName}</Text>
               ) : null}
               {'image' in item && item.image ? (
-                <Pressable onPress={() => void Linking.openURL(item.image!)}>
+                <Pressable onPress={() => setViewer({ url: item.image!, kind: 'image' })}>
                   <Image source={{ uri: item.image }} style={styles.bubbleImage} />
                 </Pressable>
               ) : null}
@@ -655,7 +657,7 @@ export default function MessagesScreen() {
               <Text style={styles.sheetTitle}>Rename group</Text>
               <Input value={renameValue} onChangeText={setRenameValue} placeholder="Group name" />
               <Button title="Save" loading={renaming} onPress={() => void saveRename()} />
-              <Button title="Cancel" variant="ghost" onPress={() => setRenameOpen(false)} />
+              <Button title="Cancel" variant="outline" onPress={() => setRenameOpen(false)} />
             </View>
           </View>
         </Modal>
@@ -664,6 +666,7 @@ export default function MessagesScreen() {
             <Text style={styles.toastText}>{toast}</Text>
           </View>
         ) : null}
+        <MediaViewer visible={!!viewer} item={viewer} onClose={() => setViewer(null)} />
       </KeyboardAvoidingView>
     );
   }
@@ -678,22 +681,6 @@ export default function MessagesScreen() {
           <Text style={styles.title}>
             {tab === 'marketplace' ? 'Marketplace' : tab === 'groups' ? 'Groups' : 'Inbox'}
           </Text>
-          {tab === 'groups' ? (
-            <Pressable
-              style={styles.headerAdd}
-              onPress={() => router.push({ pathname: '/messages-contacts', params: { mode: 'group' } })}
-            >
-              <Ionicons name="add" size={22} color={colors.white} />
-            </Pressable>
-          ) : null}
-          {tab === 'inbox' ? (
-            <Pressable
-              style={styles.headerAdd}
-              onPress={() => router.push({ pathname: '/messages-contacts', params: { mode: 'inbox' } })}
-            >
-              <Ionicons name="person-add" size={18} color={colors.white} />
-            </Pressable>
-          ) : null}
         </View>
         {tab === 'marketplace' ? (
           <View style={styles.searchWrap}>
@@ -731,7 +718,7 @@ export default function MessagesScreen() {
       </View>
 
       <ScrollView
-        contentContainerStyle={[styles.list, { paddingBottom: insets.bottom + 88 }]}
+        contentContainerStyle={[styles.list, { paddingBottom: insets.bottom + 140 }]}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -856,6 +843,24 @@ export default function MessagesScreen() {
         ) : null}
       </ScrollView>
 
+      {tab === 'inbox' || tab === 'groups' ? (
+        <Pressable
+          style={({ pressed }) => [
+            styles.fab,
+            { bottom: Math.max(insets.bottom, 10) + 72 },
+            pressed && styles.fabPressed,
+          ]}
+          onPress={() =>
+            router.push({
+              pathname: '/messages-contacts',
+              params: { mode: tab === 'groups' ? 'group' : 'inbox' },
+            })
+          }
+        >
+          <Ionicons name="add" size={28} color={colors.white} />
+        </Pressable>
+      ) : null}
+
       <View style={[styles.bottomSwitch, { paddingBottom: Math.max(insets.bottom, 10) }]}>
         <Pressable
           style={[styles.bottomTab, tab === 'marketplace' && styles.bottomTabActive]}
@@ -909,14 +914,19 @@ const styles = StyleSheet.create({
   listHeaderRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   back: { padding: 8, marginLeft: -8 },
   title: { flex: 1, fontSize: 22, fontWeight: '700', color: colors.text },
-  headerAdd: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+  fab: {
+    position: 'absolute',
+    right: 20,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     backgroundColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
+    zIndex: 30,
+    ...shadows.fab,
   },
+  fabPressed: { transform: [{ scale: 0.95 }] },
   searchWrap: { position: 'relative', justifyContent: 'center' },
   searchIcon: { position: 'absolute', left: 12, zIndex: 1 },
   search: {

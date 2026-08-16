@@ -1,8 +1,11 @@
-import { View, Pressable, StyleSheet, Text } from 'react-native';
+import { useEffect, useRef } from 'react';
+import { View, Pressable, StyleSheet, Text, Animated, AppState } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, spacing, shadows } from '../theme';
+import { useAuthStore } from '../stores/auth.store';
+import { useGuestsStore } from '../stores/guests.store';
 
 const TABS = [
   { name: 'home', label: 'Home', icon: 'home-outline' as const, iconActive: 'home' as const },
@@ -14,6 +17,41 @@ const TABS = [
 
 export function CustomTabBar({ state, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const pendingCount = useGuestsStore((s) => s.pendingCount);
+  const refreshGuests = useGuestsStore((s) => s.refresh);
+  const pulse = useRef(new Animated.Value(1)).current;
+  const waiting = pendingCount > 0;
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    void refreshGuests();
+    const timer = setInterval(() => {
+      void refreshGuests();
+    }, 8000);
+    const sub = AppState.addEventListener('change', (next) => {
+      if (next === 'active') void refreshGuests();
+    });
+    return () => {
+      clearInterval(timer);
+      sub.remove();
+    };
+  }, [isAuthenticated, refreshGuests]);
+
+  useEffect(() => {
+    if (!waiting) {
+      pulse.setValue(1);
+      return;
+    }
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulse, { toValue: 0.15, duration: 450, useNativeDriver: true }),
+        Animated.timing(pulse, { toValue: 1, duration: 450, useNativeDriver: true }),
+      ]),
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [waiting, pulse]);
 
   return (
     <View style={[styles.bar, { paddingBottom: Math.max(insets.bottom, 8) }]}>
@@ -47,11 +85,16 @@ export function CustomTabBar({ state, navigation }: BottomTabBarProps) {
 
         return (
           <Pressable key={tab.name} onPress={onPress} style={styles.tab}>
-            <Ionicons
-              name={isFocused ? tab.iconActive : tab.icon}
-              size={24}
-              color={isFocused ? colors.primary : colors.textSecondary}
-            />
+            <View style={styles.iconWrap}>
+              <Ionicons
+                name={isFocused ? tab.iconActive : tab.icon}
+                size={24}
+                color={isFocused ? colors.primary : colors.textSecondary}
+              />
+              {tab.name === 'guests' && waiting ? (
+                <Animated.View style={[styles.alertDot, { opacity: pulse }]} />
+              ) : null}
+            </View>
             <Text style={[styles.label, isFocused && styles.labelActive]}>{tab.label}</Text>
           </Pressable>
         );
@@ -76,6 +119,23 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     gap: 4,
+  },
+  iconWrap: {
+    width: 28,
+    height: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  alertDot: {
+    position: 'absolute',
+    top: -2,
+    right: -1,
+    width: 9,
+    height: 9,
+    borderRadius: 5,
+    backgroundColor: colors.error,
+    borderWidth: 1.5,
+    borderColor: colors.white,
   },
   label: {
     fontSize: 10,

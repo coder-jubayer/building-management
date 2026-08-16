@@ -253,7 +253,7 @@ export default function NoticesScreen() {
               ) : null}
               {formError ? <Text style={styles.error}>{formError}</Text> : null}
               <Button title="Post notice" loading={creating} onPress={() => void handleCreate()} />
-              <Button title="Cancel" variant="ghost" onPress={() => setCreateOpen(false)} />
+              <Button title="Cancel" variant="outline" onPress={() => setCreateOpen(false)} />
             </ScrollView>
           </View>
         </KeyboardAvoidingView>
@@ -266,7 +266,7 @@ export default function NoticesScreen() {
             <Text style={styles.confirmTitle}>Delete notice?</Text>
             <Text style={styles.confirmBody}>{deleteTarget?.title} will be removed for everyone.</Text>
             <View style={styles.confirmActions}>
-              <Button title="Cancel" variant="ghost" onPress={() => setDeleteTarget(null)} />
+              <Button title="Cancel" variant="outline" onPress={() => setDeleteTarget(null)} />
               <Button title="Delete" variant="danger" loading={deleting} onPress={() => void handleDelete()} />
             </View>
           </View>

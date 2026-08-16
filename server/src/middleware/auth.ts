@@ -3,14 +3,17 @@ import jwt from 'jsonwebtoken';
 import { env } from '../config/env';
 import { AppError } from './errorHandler';
 import {
+  canBookAmenities,
   canCreateComplaint,
   canCreateListing,
+  canManageAmenityBookings,
   canManageComplaints,
   canManageDirectory,
   canManageElections,
   canManageExpenses,
   canManageUsers,
   canPostNotices,
+  canCreateGuestVisits,
   UserRole,
 } from '../constants/roles';
 
@@ -107,6 +110,30 @@ export function requireComplaintCreator(req: AuthRequest, _res: Response, next: 
 export function requireComplaintManager(req: AuthRequest, _res: Response, next: NextFunction): void {
   if (!req.user || !canManageComplaints(req.user.role)) {
     next(new AppError(403, 'Only committee and building admins can manage complaints'));
+    return;
+  }
+  next();
+}
+
+export function requireAmenityBooker(req: AuthRequest, _res: Response, next: NextFunction): void {
+  if (!req.user || !canBookAmenities(req.user.role)) {
+    next(new AppError(403, 'You do not have permission to book amenities'));
+    return;
+  }
+  next();
+}
+
+export function requireAmenityManager(req: AuthRequest, _res: Response, next: NextFunction): void {
+  if (!req.user || !canManageAmenityBookings(req.user.role)) {
+    next(new AppError(403, 'Only building admins can manage amenity slots'));
+    return;
+  }
+  next();
+}
+
+export function requireGuestCreator(req: AuthRequest, _res: Response, next: NextFunction): void {
+  if (!req.user || !canCreateGuestVisits(req.user.role)) {
+    next(new AppError(403, 'Only security guards can send visitor approval requests'));
     return;
   }
   next();

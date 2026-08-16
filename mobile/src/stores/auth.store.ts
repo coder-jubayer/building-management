@@ -4,6 +4,7 @@ import { setAuthToken } from '../services/api.client';
 import { loginRequest, fetchMe, signupBuildingAdmin } from '../services/auth.service';
 import { unregisterPushToken } from '../services/push.service';
 import type { User } from '../types';
+import { useGuestsStore } from './guests.store';
 
 const TOKEN_KEY = 'bm_auth_token';
 
@@ -93,6 +94,7 @@ export const useAuthStore = create<AuthStore>((set) => ({
     await unregisterPushToken();
     await SecureStore.deleteItemAsync(TOKEN_KEY);
     setAuthToken(null);
+    useGuestsStore.getState().reset();
     set({
       user: null,
       token: null,

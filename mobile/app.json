@@ -48,13 +48,14 @@
           "color": "#4F46E5",
           "defaultChannel": "notices"
         }
-      ]
+      ],
+      "expo-video"
     ],
     "experiments": {
       "typedRoutes": false
     },
     "extra": {
-      "apiUrl": "http://192.168.0.106:3001/api/v1",
+      "apiUrl": "http://192.168.0.103:3001/api/v1",
       "router": {},
       "eas": {
         "projectId": "00000000-0000-0000-0000-000000000000"

@@ -295,7 +295,7 @@ export default function MessagesContactsScreen() {
             <Text style={styles.sheetTitle}>Name this group</Text>
             <Input value={groupName} onChangeText={setGroupName} placeholder="Committee chat" autoFocus />
             <Button title="Create group" loading={saving} onPress={() => void createGroup()} />
-            <Button title="Cancel" variant="ghost" onPress={() => setNameOpen(false)} />
+            <Button title="Cancel" variant="outline" onPress={() => setNameOpen(false)} />
           </View>
         </View>
       </Modal>

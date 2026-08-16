@@ -47,7 +47,9 @@ export function Button({
       {...props}
     >
       {loading ? (
-        <ActivityIndicator color={variant === 'outline' ? colors.primary : colors.white} />
+        <ActivityIndicator
+          color={variant === 'outline' || variant === 'ghost' ? colors.text : colors.white}
+        />
       ) : (
         <Text style={[styles.text, styles[`text_${variant}`], styles[`textSize_${size}`]]}>
           {title}
@@ -68,7 +70,11 @@ const styles = StyleSheet.create({
 
   primary: { backgroundColor: colors.primary },
   secondary: { backgroundColor: colors.secondary },
-  outline: { backgroundColor: 'transparent', borderWidth: 1.5, borderColor: colors.primary },
+  outline: {
+    backgroundColor: colors.slate100,
+    borderWidth: 1,
+    borderColor: colors.slate200,
+  },
   ghost: { backgroundColor: 'transparent' },
   danger: { backgroundColor: colors.error },
 
@@ -79,7 +85,7 @@ const styles = StyleSheet.create({
   text: { ...typography.label },
   text_primary: { color: colors.white },
   text_secondary: { color: colors.white },
-  text_outline: { color: colors.primary },
+  text_outline: { color: colors.text },
   text_ghost: { color: colors.primary },
   text_danger: { color: colors.white },
 

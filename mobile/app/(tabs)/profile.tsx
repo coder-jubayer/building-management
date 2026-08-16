@@ -259,7 +259,7 @@ export default function ProfileScreen() {
               />
               {formError ? <Text style={styles.error}>{formError}</Text> : null}
               <Button title="Save changes" loading={saving} onPress={() => void handleSave()} />
-              <Button title="Cancel" variant="ghost" onPress={() => setEditOpen(false)} />
+              <Button title="Cancel" variant="outline" onPress={() => setEditOpen(false)} />
             </ScrollView>
           </View>
         </KeyboardAvoidingView>
