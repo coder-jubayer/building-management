@@ -17,7 +17,13 @@ export const env = {
   mongodbUri: requireEnv('MONGODB_URI'),
   jwtSecret: requireEnv('JWT_SECRET'),
   jwtExpiresIn: process.env.JWT_EXPIRES_IN ?? '7d',
-  corsOrigins: (process.env.CORS_ORIGINS ?? 'http://localhost:8081').split(','),
+  corsOrigins: (
+    process.env.CORS_ORIGINS ??
+    'http://localhost:5173,http://localhost:8081,http://localhost:8082'
+  )
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean),
   apiUrl: process.env.API_URL ?? 'http://localhost:3000',
   isProduction: process.env.NODE_ENV === 'production',
 } as const;

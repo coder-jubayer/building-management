@@ -1,10 +1,12 @@
 import app from './app';
 import { env } from './config/env';
 import { connectDatabase, disconnectDatabase } from './db/connection';
+import { runStartupMigrations } from './db/migrations';
 import { seedAdminUser } from './db/seed';
 
 async function bootstrap(): Promise<void> {
   await connectDatabase();
+  await runStartupMigrations();
   await seedAdminUser();
 
   const server = app.listen(env.port, '0.0.0.0', () => {

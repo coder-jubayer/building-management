@@ -8,6 +8,14 @@
     "mobile:start": "npm start --prefix mobile",
     "mobile:android": "npm run android --prefix mobile",
     "mobile:ios": "npm run ios --prefix mobile",
-    "mobile:lint": "npm run lint --prefix mobile"
+    "mobile:lint": "npm run lint --prefix mobile",
+    "admin:start": "npm start --prefix admin",
+    "admin:android": "npm run android --prefix admin",
+    "admin:ios": "npm run ios --prefix admin",
+    "admin:lint": "npm run lint --prefix admin",
+    "admin-web:dev": "npm run dev --prefix admin-web",
+    "admin-web:build": "npm run build --prefix admin-web",
+    "admin-web:preview": "npm run preview --prefix admin-web",
+    "admin-web:lint": "npm run lint --prefix admin-web"
   }
 }

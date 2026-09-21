@@ -45,6 +45,10 @@ export function isResident(role?: string | null): boolean {
   return role === 'resident';
 }
 
+export function isGuard(role?: string | null): boolean {
+  return role === 'guard';
+}
+
 export function canManageUsers(role?: string | null): boolean {
   return isAppAdmin(role) || isBuildingAdmin(role);
 }
@@ -55,6 +59,10 @@ export function canPostNotices(role?: string | null): boolean {
 
 export function canManageExpenses(role?: string | null): boolean {
   return isCommittee(role) || isBuildingAdmin(role) || isAppAdmin(role);
+}
+
+export function canManageResidentDues(role?: string | null): boolean {
+  return isBuildingAdmin(role) || isAppAdmin(role);
 }
 
 export function canManageDirectory(role?: string | null): boolean {
@@ -91,6 +99,11 @@ export function canBookAmenities(role?: string | null): boolean {
 
 export function canManageAmenityBookings(role?: string | null): boolean {
   return isBuildingAdmin(role) || isAppAdmin(role);
+}
+
+/** Guards can see who booked which slot, but they cannot book or cancel. */
+export function canViewAmenitySchedule(role?: string | null): boolean {
+  return canManageAmenityBookings(role) || isGuard(role);
 }
 
 export function canCreateGuestVisits(role?: string | null): boolean {

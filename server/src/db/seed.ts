@@ -57,7 +57,16 @@ export async function seedAdminUser(): Promise<void> {
 
   let defaultBuilding = await Building.findOne({ name: 'Default Community' });
   if (!defaultBuilding) {
-    defaultBuilding = await Building.create({ name: 'Default Community' });
+    defaultBuilding = await Building.create({
+      name: 'Default Community',
+      accessStatus: 'active',
+      trialClaimed: false,
+      activatedAt: new Date(),
+    });
+  } else if (!defaultBuilding.accessStatus || defaultBuilding.accessStatus === 'locked') {
+    defaultBuilding.accessStatus = 'active';
+    defaultBuilding.activatedAt = defaultBuilding.activatedAt || new Date();
+    await defaultBuilding.save();
   }
 
   await User.collection.updateMany(
@@ -136,6 +145,37 @@ export async function seedAdminUser(): Promise<void> {
     }
   } else if (!existingGuard.phone) {
     await User.updateOne({ email: guardEmail }, { $set: { phone: '+8801711000077' } });
+  }
+
+  const buildingAdminEmail = 'building.admin@bm.com';
+  const existingBuildingAdmin = await User.findOne({ email: buildingAdminEmail });
+  if (!existingBuildingAdmin) {
+    const hasAnyBuildingAdmin = await User.exists({
+      role: 'building_admin',
+      buildingId: defaultBuilding._id.toString(),
+    });
+    if (!hasAnyBuildingAdmin) {
+      try {
+        await User.create({
+          name: 'Building Admin',
+          email: buildingAdminEmail,
+          password: 'building123',
+          role: 'building_admin',
+          phone: '+8801711000066',
+          buildingId: defaultBuilding._id.toString(),
+        });
+        if (!defaultBuilding.createdBy) {
+          const created = await User.findOne({ email: buildingAdminEmail });
+          if (created) {
+            defaultBuilding.createdBy = created._id.toString();
+            await defaultBuilding.save();
+          }
+        }
+        console.log(`Building admin seeded (${buildingAdminEmail})`);
+      } catch (error) {
+        if ((error as { code?: number }).code !== 11000) throw error;
+      }
+    }
   }
 
   await User.updateOne({ email: committeeEmail }, { $set: { phone: '+8801711000088' } });
