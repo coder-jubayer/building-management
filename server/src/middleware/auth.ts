@@ -11,16 +11,18 @@ import {
   canManageDirectory,
   canManageElections,
   canManageExpenses,
+  canManageResidentDues,
   canManageUsers,
   canPostNotices,
   canCreateGuestVisits,
+  isAppAdmin,
   UserRole,
 } from '../constants/roles';
 
 export interface AuthPayload {
   userId: string;
   role: UserRole;
-  email: string;
+  email?: string;
   buildingId?: string;
 }
 
@@ -59,6 +61,14 @@ export function requireUserManager(req: AuthRequest, _res: Response, next: NextF
   next();
 }
 
+export function requireAppAdmin(req: AuthRequest, _res: Response, next: NextFunction): void {
+  if (!req.user || !isAppAdmin(req.user.role)) {
+    next(new AppError(403, 'Only app admins can access this resource'));
+    return;
+  }
+  next();
+}
+
 export function requireNoticePoster(req: AuthRequest, _res: Response, next: NextFunction): void {
   if (!req.user || !canPostNotices(req.user.role)) {
     next(new AppError(403, 'Only committee and building admins can post notices'));
@@ -70,6 +80,14 @@ export function requireNoticePoster(req: AuthRequest, _res: Response, next: Next
 export function requireExpenseManager(req: AuthRequest, _res: Response, next: NextFunction): void {
   if (!req.user || !canManageExpenses(req.user.role)) {
     next(new AppError(403, 'Only committee can add or update expenses'));
+    return;
+  }
+  next();
+}
+
+export function requireResidentDueManager(req: AuthRequest, _res: Response, next: NextFunction): void {
+  if (!req.user || !canManageResidentDues(req.user.role)) {
+    next(new AppError(403, 'Only building admins can manage resident dues'));
     return;
   }
   next();
