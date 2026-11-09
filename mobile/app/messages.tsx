@@ -20,6 +20,7 @@ import * as DocumentPicker from 'expo-document-picker';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, spacing, borderRadius, shadows } from '../src/theme';
+import { useAccessChromeInset } from '../src/hooks/useAccessChromeInset';
 import { MediaViewer, MediaViewerItem } from '../src/components/MediaViewer';
 import { PopupHeader } from '../src/components/PopupHeader';
 import { Button, Input } from '../src/components/ui';
@@ -135,6 +136,7 @@ export default function MessagesScreen() {
   const router = useRouter();
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
+  const chromeInset = useAccessChromeInset();
   const params = useLocalSearchParams<{
     tab?: string;
     listingId?: string;
@@ -564,7 +566,7 @@ export default function MessagesScreen() {
   if (chatKind && chatId) {
     return (
       <KeyboardAvoidingView style={styles.root} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <View style={[styles.chatHeader, { paddingTop: insets.top + spacing.sm }]}>
+        <View style={[styles.chatHeader, { paddingTop: insets.top + chromeInset + spacing.sm }]}>
           <Pressable onPress={closeChat} style={styles.back}>
             <Ionicons name="arrow-back" size={22} color={colors.slate800} />
           </Pressable>
@@ -861,7 +863,7 @@ export default function MessagesScreen() {
 
   return (
     <View style={styles.root}>
-      <View style={[styles.listHeader, { paddingTop: insets.top + spacing.md }]}>
+      <View style={[styles.listHeader, { paddingTop: insets.top + chromeInset + spacing.md }]}>
         <View style={styles.listHeaderRow}>
           <Pressable onPress={() => router.back()} style={styles.back}>
             <Ionicons name="arrow-back" size={22} color={colors.slate800} />

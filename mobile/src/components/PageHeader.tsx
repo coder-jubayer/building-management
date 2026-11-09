@@ -2,6 +2,7 @@ import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, spacing, typography } from '../theme';
+import { useAccessChromeInset } from '../hooks/useAccessChromeInset';
 
 interface PageHeaderProps {
   title: string;
@@ -13,14 +14,14 @@ interface PageHeaderProps {
 
 export function PageHeader({ title, onBack, rightAction, children }: PageHeaderProps) {
   const insets = useSafeAreaInsets();
+  const chromeInset = useAccessChromeInset();
 
   return (
     <View
       style={[
         styles.header,
         {
-          // Match Guests: safe area + breathing room below status bar
-          paddingTop: insets.top + spacing.md,
+          paddingTop: insets.top + chromeInset + spacing.md,
         },
       ]}
     >

@@ -115,18 +115,18 @@ export function BuildingAccessChrome() {
       if (!accessInfo) return;
 
       const nextLocked = !accessInfo.canWrite;
-      if (nextLocked) {
+      if (nextLocked && isAdmin) {
         schedulePopup();
-      } else {
+      } else if (!nextLocked) {
         clearDelay();
         hasScheduledPopup.current = false;
         setPanelOpen(false);
       }
     } catch {
       // keep cached access — still show popup if we already know we're locked
-      if (locked) schedulePopup();
+      if (locked && isAdmin) schedulePopup();
     }
-  }, [setUser, schedulePopup, user?.buildingAccess, locked]);
+  }, [setUser, schedulePopup, user?.buildingAccess, locked, isAdmin]);
 
   useEffect(() => {
     if (!isAuthenticated || !user?.buildingId) return;
@@ -149,8 +149,8 @@ export function BuildingAccessChrome() {
 
   // Signup/login payloads already include buildingAccess — don't wait on sync to open.
   useEffect(() => {
-    if (locked) schedulePopup();
-  }, [locked, schedulePopup]);
+    if (locked && isAdmin) schedulePopup();
+  }, [locked, isAdmin, schedulePopup]);
 
   useEffect(() => {
     return subscribeActivationPopup(() => {
@@ -194,8 +194,9 @@ export function BuildingAccessChrome() {
 
   const chipTop = { top: insets.top + 6 };
 
-  // Active free trial — compact top-center chip (same slot as the lock).
+  // Active free trial chip is for building admins only — residents should not see it.
   if (status === 'trial' && canWrite) {
+    if (!isAdmin) return null;
     const days = access?.trialDaysRemaining ?? 0;
     return (
       <View style={[styles.chipAnchor, chipTop]} pointerEvents="box-none">
@@ -226,7 +227,7 @@ export function BuildingAccessChrome() {
 
   return (
     <>
-      {!panelOpen ? (
+      {isAdmin && !panelOpen ? (
         <View style={[styles.chipAnchor, chipTop]} pointerEvents="box-none">
           <Pressable
             style={({ pressed }) => [styles.lockChip, pressed && styles.lockChipPressed]}

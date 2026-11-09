@@ -5,10 +5,12 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { mockRentals } from '../src/data/mockData';
 import { colors, spacing, borderRadius, shadows } from '../src/theme';
+import { useAccessChromeInset } from '../src/hooks/useAccessChromeInset';
 
 export default function RentalsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const chromeInset = useAccessChromeInset();
   const [search, setSearch] = useState('');
   const filtered = mockRentals.filter(
     (r) =>
@@ -24,7 +26,7 @@ export default function RentalsScreen() {
 
   return (
     <View style={styles.root}>
-      <View style={[styles.header, { paddingTop: insets.top + spacing.md }]}>
+      <View style={[styles.header, { paddingTop: insets.top + chromeInset + spacing.md }]}>
         <View style={styles.headerRow}>
           <Pressable onPress={() => router.back()} style={styles.back}>
             <Ionicons name="arrow-back" size={22} color={colors.slate800} />

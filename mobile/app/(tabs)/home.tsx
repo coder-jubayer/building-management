@@ -19,10 +19,12 @@ import { formatNoticeDate, formatSlotTime } from '../../src/utils/date';
 import { formatMoney } from '../../src/utils/money';
 import { AmenityBooking, GuestVisit, Notice, isGuard, isResident } from '../../src/types';
 import { colors, spacing, borderRadius, typography, shadows } from '../../src/theme';
+import { useAccessChromeInset } from '../../src/hooks/useAccessChromeInset';
 
 export default function HomeScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const chromeInset = useAccessChromeInset();
   const user = useAuthStore((s) => s.user);
   const [recentNotices, setRecentNotices] = useState<Notice[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -86,7 +88,7 @@ export default function HomeScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
+      <View style={[styles.header, { paddingTop: insets.top + chromeInset + spacing.sm }]}>
         <View>
           <Text style={styles.welcome}>Welcome back,</Text>
           <Text style={styles.name}>{firstName}</Text>

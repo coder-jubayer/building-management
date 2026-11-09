@@ -13,6 +13,7 @@ import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, spacing, borderRadius, shadows } from '../src/theme';
+import { useAccessChromeInset } from '../src/hooks/useAccessChromeInset';
 import { Button, Input } from '../src/components/ui';
 import { PopupHeader } from '../src/components/PopupHeader';
 import {
@@ -38,6 +39,7 @@ function firstParam(value?: string | string[]): string {
 export default function MessagesContactsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const chromeInset = useAccessChromeInset();
   const params = useLocalSearchParams<{ mode?: string; groupId?: string }>();
   const mode = (firstParam(params.mode) || 'inbox') as 'inbox' | 'group' | 'group-members';
   const groupId = firstParam(params.groupId);
@@ -174,7 +176,7 @@ export default function MessagesContactsScreen() {
 
   return (
     <View style={styles.root}>
-      <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
+      <View style={[styles.header, { paddingTop: insets.top + chromeInset + spacing.sm }]}>
         <View style={styles.headerRow}>
           <Pressable onPress={() => router.back()} style={styles.back}>
             <Ionicons name="arrow-back" size={22} color={colors.slate800} />
